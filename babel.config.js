@@ -4,7 +4,10 @@ module.exports = function (api) {
     plugins: [
       [
         'module-resolver',
-        { alias: { '@Assets': './assets', '@Components': './src/components' }, extensions: ['.ts', '.tsx'] },
+        {
+          alias: { '@Assets': './assets', '@Components': './src/components', '@Screens': './src/screens' },
+          extensions: ['.ts', '.tsx'],
+        },
       ],
     ],
     presets: ['babel-preset-expo'],

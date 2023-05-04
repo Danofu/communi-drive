@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": { "@Assets/*": ["assets/*"], "@Components/*": ["src/components/*"] },
+    "paths": { "@Assets/*": ["assets/*"], "@Components/*": ["src/components/*"], "@Screens/*": ["src/screens/*"] },
     "strict": true
   },
   "extends": "expo/tsconfig.base"
