@@ -1,7 +1,13 @@
 import { Formik } from 'formik';
 import { useRef, useState } from 'react';
 import { TextInput as RNTextInput, StyleSheet, View } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import { Button, HelperText, TextInput } from 'react-native-paper';
+import * as Yup from 'yup';
+
+const validationSchema = Yup.object({
+  email: Yup.string().email('Invalid email address').required('Email address is required'),
+  password: Yup.string().min(9, 'Password should at least 9 characters long').required('Password is required'),
+});
 
 export default function SignInForm() {
   const passwordInputRef = useRef<RNTextInput>(null);
@@ -15,46 +21,53 @@ export default function SignInForm() {
     <Formik
       initialValues={{ email: '', password: '' }}
       onSubmit={(values) => console.log('[ SignInForm[Formik](onSubmit) ]: values:', values)}
+      validationSchema={validationSchema}
     >
-      {({ handleBlur, handleChange, handleSubmit, values }) => {
-        const submitHandler = () => handleSubmit();
-
+      {({ errors, handleBlur, handleChange, handleSubmit, touched, values }) => {
         return (
           <View style={styles.container}>
-            <View style={styles.inputContainer}>
-              <TextInput
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect={false}
-                autoFocus
-                blurOnSubmit={false}
-                keyboardType="email-address"
-                label="Email"
-                mode="outlined"
-                onBlur={handleBlur('email')}
-                onChangeText={handleChange('email')}
-                onSubmitEditing={emailEditedHandler}
-                placeholder="Your email ..."
-                value={values.email}
-              />
-              <TextInput
-                autoCapitalize="none"
-                autoComplete="password"
-                autoCorrect={false}
-                label="Password"
-                mode="outlined"
-                onBlur={handleBlur('password')}
-                onChangeText={handleChange('password')}
-                placeholder="Your password ..."
-                ref={passwordInputRef}
-                right={
-                  <TextInput.Icon icon={isPasswordVisible ? 'eye-off' : 'eye'} onPress={passwordVisibilityHandler} />
-                }
-                secureTextEntry={!isPasswordVisible}
-                value={values.password}
-              />
+            <View style={styles.inputsContainer}>
+              <View>
+                <TextInput
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect={false}
+                  autoFocus
+                  blurOnSubmit={false}
+                  error={touched.email && !!errors.email}
+                  keyboardType="email-address"
+                  label="Email *"
+                  mode="outlined"
+                  onBlur={handleBlur('email')}
+                  onChangeText={handleChange('email')}
+                  onSubmitEditing={emailEditedHandler}
+                  placeholder="Your email ..."
+                  value={values.email}
+                />
+                {touched.email && errors.email && <HelperText type="error">{errors.email}</HelperText>}
+              </View>
+              <View>
+                <TextInput
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
+                  error={touched.password && !!errors.password}
+                  label="Password *"
+                  mode="outlined"
+                  onBlur={handleBlur('password')}
+                  onChangeText={handleChange('password')}
+                  placeholder="Your password ..."
+                  ref={passwordInputRef}
+                  right={
+                    <TextInput.Icon icon={isPasswordVisible ? 'eye-off' : 'eye'} onPress={passwordVisibilityHandler} />
+                  }
+                  secureTextEntry={!isPasswordVisible}
+                  value={values.password}
+                />
+                {touched.password && errors.password && <HelperText type="error">{errors.password}</HelperText>}
+              </View>
             </View>
-            <Button mode="contained" onPress={submitHandler} style={styles.button}>
+            <Button mode="contained" onPress={() => handleSubmit()} style={styles.button}>
               Continue
             </Button>
           </View>
@@ -72,7 +85,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: 12,
   },
-  inputContainer: {
+  inputsContainer: {
     gap: 12,
   },
 });
