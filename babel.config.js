@@ -15,6 +15,7 @@ module.exports = function (api) {
           extensions: ['.ts', '.tsx'],
         },
       ],
+      ['module:react-native-dotenv'],
     ],
     presets: ['babel-preset-expo'],
   };
