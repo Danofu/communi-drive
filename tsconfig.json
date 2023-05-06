@@ -5,7 +5,7 @@
       "@Assets/*": ["assets/*"],
       "@Components/*": ["src/components/*"],
       "@Screens/*": ["src/screens/*"],
-      "@Util/*": ["src/util/*"]
+      "@Utils/*": ["src/utils/*"]
     },
     "strict": true
   },

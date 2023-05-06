@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
 import SignInForm from '@Components/SignInForm';
-import elevation from '@Util/elevation';
+import elevation from '@Utils/elevation';
 
 export default function Authorization() {
   return (

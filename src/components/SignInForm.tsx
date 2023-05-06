@@ -1,8 +1,10 @@
-import { Formik } from 'formik';
+import { Formik, FormikValues } from 'formik';
 import { useRef, useState } from 'react';
 import { TextInput as RNTextInput, StyleSheet, View } from 'react-native';
 import { Button, HelperText, TextInput } from 'react-native-paper';
 import * as Yup from 'yup';
+
+import { signInLocal } from '@Utils/firebase/firebase-auth';
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email address').required('Email address is required'),
@@ -17,12 +19,13 @@ export default function SignInForm() {
 
   const emailEditedHandler = () => passwordInputRef.current?.focus();
 
+  const submitHandler = async (values: FormikValues) => {
+    const { email, password } = values;
+    console.log('[ SignInForm(submitHandler) ]:', await signInLocal(email, password));
+  };
+
   return (
-    <Formik
-      initialValues={{ email: '', password: '' }}
-      onSubmit={(values) => console.log('[ SignInForm[Formik](onSubmit) ]: values:', values)}
-      validationSchema={validationSchema}
-    >
+    <Formik initialValues={{ email: '', password: '' }} onSubmit={submitHandler} validationSchema={validationSchema}>
       {({ errors, handleBlur, handleChange, handleSubmit, touched, values }) => {
         return (
           <View style={styles.container}>

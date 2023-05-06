@@ -10,7 +10,7 @@ module.exports = function (api) {
             '@Assets': './assets',
             '@Components': './src/components',
             '@Screens': './src/screens',
-            '@Util': './src/util',
+            '@Utils': './src/utils',
           },
           extensions: ['.ts', '.tsx'],
         },
