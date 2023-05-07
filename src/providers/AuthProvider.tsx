@@ -11,7 +11,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   const signInUser = async (email: string, password: string) => {
     const [user, error] = await signInLocal(email, password);
     if (error) {
-      console.error('[ AuthProvider(signInUser) ]:', error);
       return error;
     }
 

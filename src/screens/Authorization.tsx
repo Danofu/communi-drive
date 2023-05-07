@@ -1,10 +1,16 @@
+import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Snackbar, Text, useTheme } from 'react-native-paper';
 
 import SignInForm from '@Components/SignInForm';
 import elevation from '@Utils/elevation';
 
 export default function Authorization() {
+  const { colors } = useTheme();
+  const [signInErrorMessage, setSignInErrorMessage] = useState<string>();
+
+  const errorMassageDismissHandler = () => setSignInErrorMessage(undefined);
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.root}>
@@ -13,9 +19,16 @@ export default function Authorization() {
             <Text style={styles.headerText} variant="headlineMedium">
               Welcome
             </Text>
-            <SignInForm />
+            <SignInForm onError={setSignInErrorMessage} />
           </View>
         </KeyboardAvoidingView>
+        <Snackbar
+          onDismiss={errorMassageDismissHandler}
+          style={{ backgroundColor: colors.error }}
+          visible={!!signInErrorMessage}
+        >
+          <Text style={{ color: colors.errorContainer }}>{signInErrorMessage}</Text>
+        </Snackbar>
       </View>
     </TouchableWithoutFeedback>
   );

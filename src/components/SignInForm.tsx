@@ -1,19 +1,22 @@
 import { Formik, FormikConfig } from 'formik';
 import { useContext, useRef, useState } from 'react';
-import { TextInput as RNTextInput, StyleSheet, View } from 'react-native';
+import { Keyboard, TextInput as RNTextInput, StyleSheet, View } from 'react-native';
 import { Button, HelperText, TextInput } from 'react-native-paper';
 import * as Yup from 'yup';
 
 import { AuthContext } from '@Providers/AuthProvider';
 
-type SubmitHandler = FormikConfig<{ email: string; password: string }>['onSubmit'];
+type FormikSubmitHandler = FormikConfig<{ email: string; password: string }>['onSubmit'];
+
+export type OnError = (message: string) => void | Promise<void>;
+type Props = { onError: OnError };
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email address').required('Email address is required'),
   password: Yup.string().min(9, 'Password should at least 9 characters long').required('Password is required'),
 });
 
-export default function SignInForm() {
+export default function SignInForm({ onError }: Props) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const authCtx = useContext(AuthContext);
   const passwordInputRef = useRef<RNTextInput>(null);
@@ -22,15 +25,18 @@ export default function SignInForm() {
 
   const emailEditedHandler = () => passwordInputRef.current?.focus();
 
-  const submitHandler: SubmitHandler = async ({ email, password }, helpers) => {
-    await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
+  const submitHandler: FormikSubmitHandler = async ({ email, password }, helpers) => {
+    Keyboard.dismiss();
     const error = await authCtx.signInUser(email, password);
 
     if (error) {
+      let errorMessage = 'Something went wrong';
+      if (['auth/user-not-found', 'auth/wrong-password'].includes(error.code)) {
+        errorMessage = 'Provided credentials are invalid';
+      }
+
       helpers.setFieldValue('password', '');
-      helpers.setFieldTouched('password', false);
-    } else {
-      helpers.resetForm();
+      await onError(errorMessage);
     }
   };
 
