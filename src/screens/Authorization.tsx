@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
 import SignInForm from '@Components/SignInForm';
@@ -6,14 +6,18 @@ import elevation from '@Utils/elevation';
 
 export default function Authorization() {
   return (
-    <View style={styles.root}>
-      <View style={styles.formContainer}>
-        <Text style={styles.headerText} variant="headlineMedium">
-          Sign In
-        </Text>
-        <SignInForm />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.root}>
+        <KeyboardAvoidingView behavior="position" style={{ width: '100%' }}>
+          <View style={styles.formContainer}>
+            <Text style={styles.headerText} variant="headlineMedium">
+              Sign In
+            </Text>
+            <SignInForm />
+          </View>
+        </KeyboardAvoidingView>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
