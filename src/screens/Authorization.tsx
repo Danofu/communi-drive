@@ -11,7 +11,7 @@ export default function Authorization() {
         <KeyboardAvoidingView behavior="position" style={{ width: '100%' }}>
           <View style={styles.formContainer}>
             <Text style={styles.headerText} variant="headlineMedium">
-              Sign In
+              Welcome
             </Text>
             <SignInForm />
           </View>

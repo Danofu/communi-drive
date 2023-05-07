@@ -1,10 +1,12 @@
-import { Formik, FormikValues } from 'formik';
-import { useRef, useState } from 'react';
+import { Formik, FormikConfig } from 'formik';
+import { useContext, useRef, useState } from 'react';
 import { TextInput as RNTextInput, StyleSheet, View } from 'react-native';
 import { Button, HelperText, TextInput } from 'react-native-paper';
 import * as Yup from 'yup';
 
-import { signInLocal } from '@Utils/firebase/firebase-auth';
+import { AuthContext } from '@Providers/AuthProvider';
+
+type SubmitHandler = FormikConfig<{ email: string; password: string }>['onSubmit'];
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email address').required('Email address is required'),
@@ -12,21 +14,29 @@ const validationSchema = Yup.object({
 });
 
 export default function SignInForm() {
-  const passwordInputRef = useRef<RNTextInput>(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const authCtx = useContext(AuthContext);
+  const passwordInputRef = useRef<RNTextInput>(null);
 
   const passwordVisibilityHandler = () => setIsPasswordVisible((isVisible) => !isVisible);
 
   const emailEditedHandler = () => passwordInputRef.current?.focus();
 
-  const submitHandler = async (values: FormikValues) => {
-    const { email, password } = values;
-    console.log('[ SignInForm(submitHandler) ]:', await signInLocal(email, password));
+  const submitHandler: SubmitHandler = async ({ email, password }, helpers) => {
+    await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
+    const error = await authCtx.signInUser(email, password);
+
+    if (error) {
+      helpers.setFieldValue('password', '');
+      helpers.setFieldTouched('password', false);
+    } else {
+      helpers.resetForm();
+    }
   };
 
   return (
     <Formik initialValues={{ email: '', password: '' }} onSubmit={submitHandler} validationSchema={validationSchema}>
-      {({ errors, handleBlur, handleChange, handleSubmit, touched, values }) => {
+      {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => {
         return (
           <View style={styles.container}>
             <View style={styles.inputsContainer}>
@@ -70,8 +80,14 @@ export default function SignInForm() {
                 {touched.password && errors.password && <HelperText type="error">{errors.password}</HelperText>}
               </View>
             </View>
-            <Button mode="contained" onPress={() => handleSubmit()} style={styles.button}>
-              Continue
+            <Button
+              disabled={isSubmitting}
+              loading={isSubmitting}
+              mode="contained"
+              onPress={() => handleSubmit()}
+              style={styles.button}
+            >
+              {isSubmitting ? 'Signing In ...' : 'Sign In'}
             </Button>
           </View>
         );

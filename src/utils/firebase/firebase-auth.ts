@@ -1,13 +1,20 @@
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import { UserCredential, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 import firebaseApp from '@Utils/firebase/firebase-app';
 
 const auth = getAuth(firebaseApp);
 
-export const signInLocal = (email: string, password: string) => {
+type SignInLocalResponse = [UserCredential | undefined, FirebaseError | undefined];
+export const signInLocal = async (email: string, password: string): Promise<SignInLocalResponse> => {
+  let error: FirebaseError | undefined;
+  let response: UserCredential | undefined;
+
   try {
-    return signInWithEmailAndPassword(auth, email, password);
+    response = await signInWithEmailAndPassword(auth, email, password);
   } catch (err) {
-    console.error('[ signInLocal ]:', err);
+    error = err as FirebaseError;
   }
+
+  return [response, error];
 };
