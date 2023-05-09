@@ -9,23 +9,25 @@ import { signInLocal } from '@Utils/firebase/firebase-auth';
 import { onUserData, UserDataListener } from '@Utils/firebase/firebase-database';
 
 const userCredentialSchema = z.object({ email: z.string(), password: z.string() });
-const userDataSchema = z.object({ role: z.string() });
+const userDataSchema = z.object({ role: z.enum(['dispatcher', 'driver']) });
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+type SignInUserResult = [UserCredential, undefined] | [undefined, Error | FirebaseError | UnavailabilityError];
 type AuthContextType = {
   credential?: UserCredential;
   isAuthorized: boolean;
-  signInUser: (email: string, password: string) => Promise<Error | FirebaseError | UnavailabilityError | undefined>;
+  isFetching: boolean;
+  signInUser: (email: string, password: string) => Promise<SignInUserResult>;
   user?: UserData;
 };
 type UserData = z.infer<typeof userDataSchema>;
 
 export default function AuthProvider({ children }: PropsWithChildren) {
+  const [isFetching, setIsFetching] = useState(true);
   const [userCredential, setUserCredential] = useState<UserCredential>();
   const [userData, setUserData] = useState<UserData>();
 
   const isAuthorized = !!userCredential;
-  console.log('[ AuthProvider ]', userData);
 
   const userDataListener: UserDataListener = (snapshot) => {
     try {
@@ -34,16 +36,20 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     } catch (err) {
       console.error('[ AuthProvider(userDataListener) ]', err);
     }
+
+    setIsFetching(false);
   };
 
-  const signInUser = useCallback(async (email: string, password: string) => {
+  const signInUser = useCallback(async (email: string, password: string): Promise<SignInUserResult> => {
     try {
       const credential = await signInLocal(email, password);
       await SecureStore.setItemAsync('user.credential', JSON.stringify({ email, password }));
       setUserCredential(credential);
+      return [credential, undefined];
     } catch (err) {
       console.error('[ AuthProvider(signInUser) ]', err);
-      return err as Error | FirebaseError | UnavailabilityError;
+      const error = err as Error | FirebaseError | UnavailabilityError;
+      return [undefined, error];
     }
   }, []);
 
@@ -55,10 +61,13 @@ export default function AuthProvider({ children }: PropsWithChildren) {
           const { email, password } = userCredentialSchema.parse(JSON.parse(serializedCredential));
           const credential = await signInLocal(email, password);
           setUserCredential(credential);
+          return;
         }
       } catch (err) {
         console.error('[ AuthProvider|useEffect| ]:', err);
       }
+
+      setIsFetching(false);
     })();
   }, []);
 
@@ -70,8 +79,8 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, [userCredential]);
 
   const value = useMemo<AuthContextType>(
-    () => ({ credential: userCredential, isAuthorized, signInUser, user: userData }),
-    [userCredential, isAuthorized, userData]
+    () => ({ credential: userCredential, isAuthorized, isFetching, signInUser, user: userData }),
+    [userCredential, isAuthorized, isFetching, userData]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
