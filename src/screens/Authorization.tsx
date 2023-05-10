@@ -1,27 +1,30 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
-import { Snackbar, Text, useTheme } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 
-import SignInForm, { OnUserData } from '@Components/SignInForm';
+import SignInForm, { OnSubmit } from '@Components/SignInForm';
+import ErrorSnackbar from '@Components/UI/ErrorSnackbar';
 import elevation from '@Utils/elevation';
 import { StackParamList } from 'App';
 
 type Props = NativeStackScreenProps<StackParamList, 'Authorization'>;
 
 export default function Authorization({ navigation }: Props) {
-  const [signInErrorMessage, setSignInErrorMessage] = useState<string>();
-  const { colors } = useTheme();
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  const errorMassageDismissHandler = () => setSignInErrorMessage(undefined);
-
-  const userDataHandler: OnUserData = (data, error) => {
-    if (error) {
+  const signInSubmitHandler: OnSubmit = (result) => {
+    if (typeof result === 'string') {
+      setAuthError(result);
       return;
     }
 
-    data && navigation.replace(data.role === 'dispatcher' ? 'ManageRoutes' : 'Map');
+    if (result) {
+      navigation.replace(result.role === 'dispatcher' ? 'ManageRoutes' : 'Map');
+    }
   };
+
+  const errorDismissHandler = () => setAuthError(null);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -29,18 +32,14 @@ export default function Authorization({ navigation }: Props) {
         <KeyboardAvoidingView behavior="position" style={{ width: '100%' }}>
           <View style={styles.formContainer}>
             <Text style={styles.headerText} variant="headlineMedium">
-              Welcome
+              Sign In
             </Text>
-            <SignInForm onSubmitError={setSignInErrorMessage} onUserData={userDataHandler} />
+            <SignInForm onSubmit={signInSubmitHandler} />
           </View>
         </KeyboardAvoidingView>
-        <Snackbar
-          onDismiss={errorMassageDismissHandler}
-          style={{ backgroundColor: colors.error }}
-          visible={!!signInErrorMessage}
-        >
-          <Text style={{ color: colors.errorContainer }}>{signInErrorMessage}</Text>
-        </Snackbar>
+        <ErrorSnackbar onDismiss={errorDismissHandler} visible={!!authError}>
+          {authError}
+        </ErrorSnackbar>
       </View>
     </TouchableWithoutFeedback>
   );

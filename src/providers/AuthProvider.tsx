@@ -1,98 +1,102 @@
 import { UnavailabilityError } from 'expo-modules-core/src/errors/UnavailabilityError';
 import * as SecureStore from 'expo-secure-store';
 import { FirebaseError } from 'firebase/app';
-import { UserCredential } from 'firebase/auth';
-import { createContext, PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react';
-import { z } from 'zod';
+import { signInWithEmailAndPassword, UserCredential } from 'firebase/auth';
+import { createContext, PropsWithChildren, useCallback, useMemo, useState } from 'react';
+import { z, ZodError } from 'zod';
 
-import { signInLocal } from '@Utils/firebase/firebase-auth';
-import { onUserData, UserDataListener } from '@Utils/firebase/firebase-database';
+import { auth } from '@Utils/firebase/firebase-auth';
+import { getUserData } from '@Utils/firebase/firebase-database';
 
-const userCredentialSchema = z.object({ email: z.string(), password: z.string() });
 export const userDataSchema = z.object({ fullName: z.string(), role: z.enum(['dispatcher', 'driver']) });
-export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
-
-type SignInUserResult = [UserCredential, undefined] | [undefined, Error | FirebaseError | UnavailabilityError];
-type AuthContextType = {
-  credential?: UserCredential;
-  isAuthorized: boolean;
-  isFetchingLocalUser: boolean;
-  signInUser: (
-    email: string,
-    password: string,
-    safeLocally?: boolean,
-    userDataListener?: UserDataListener
-  ) => Promise<SignInUserResult>;
-  user?: UserData;
-};
 export type UserData = z.infer<typeof userDataSchema>;
 
+const credentialSchema = z.object({ email: z.string(), password: z.string() });
+type Credential = z.infer<typeof credentialSchema>;
+
+type GetUserError = Error | ZodError<UserData>;
+type GetUserResult = [UserData | null, undefined] | [undefined, GetUserError];
+type GetUser = (credential: UserCredential) => Promise<GetUserResult>;
+
+type SignInError = Error | FirebaseError | GetUserError | UnavailabilityError;
+type SignInResult = [{ credential: UserCredential; user: UserData | null }, undefined] | [undefined, SignInError];
+type SignIn = (email: string, password: string, saveLocally?: boolean) => Promise<SignInResult>;
+
+type AuthContextType = {
+  checkLocalUser: () => Promise<void>;
+  isAuthorized: boolean;
+  localUserChecked: boolean;
+  signIn: SignIn;
+  user: UserData | null;
+};
+
+export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
 export default function AuthProvider({ children }: PropsWithChildren) {
-  const [isFetchingLocalUser, setIsFetchingLocalUser] = useState(true);
-  const [userCredential, setUserCredential] = useState<UserCredential>();
-  const [userData, setUserData] = useState<UserData>();
+  const [localUserChecked, setLocalUserChecked] = useState(false);
+  const [userCredential, setUserCredential] = useState<UserCredential | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   const isAuthorized = !!userCredential;
 
-  const userDataListener: UserDataListener = (snapshot) => {
+  const getUser = useCallback<GetUser>(async (credential) => {
     try {
+      const snapshot = await getUserData(credential.user.uid);
+      if (!snapshot.exists()) {
+        return [null, undefined];
+      }
+
       const data = userDataSchema.parse(snapshot.val());
-      setUserData(data);
+      return [data, undefined];
     } catch (err) {
-      console.error('[ AuthProvider(userDataListener) ]', err);
-    } finally {
-      setIsFetchingLocalUser(false);
+      return [undefined, err as GetUserError];
     }
-  };
-
-  const signInUser = useCallback(
-    async (
-      email: string,
-      password: string,
-      saveLocally = false,
-      listener?: UserDataListener
-    ): Promise<SignInUserResult> => {
-      try {
-        const credential = await signInLocal(email, password);
-
-        if (saveLocally) {
-          await SecureStore.setItemAsync('user.credential', JSON.stringify({ email, password }));
-        }
-
-        listener && onUserData(credential.user.uid, listener);
-        setUserCredential(credential);
-
-        return [credential, undefined];
-      } catch (err) {
-        console.error('[ AuthProvider(signInUser) ]', err);
-        return [undefined, err as Error | FirebaseError | UnavailabilityError];
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const serializedCredential = await SecureStore.getItemAsync('user.credential');
-        if (!serializedCredential) {
-          setIsFetchingLocalUser(false);
-          return;
-        }
-
-        const { email, password } = userCredentialSchema.parse(JSON.parse(serializedCredential));
-        const [, error] = await signInUser(email, password, false, userDataListener);
-        error && setIsFetchingLocalUser(false);
-      } catch (err) {
-        console.error('[ AuthProvider|useEffect| ]', err);
-        setIsFetchingLocalUser(false);
-      }
-    })();
   }, []);
 
+  const signIn = useCallback<SignIn>(async (email, password, saveLocally = false) => {
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      setUserCredential(credential);
+
+      if (saveLocally) {
+        await SecureStore.setItemAsync('user.credential', JSON.stringify({ email, password }));
+      }
+
+      const [data, error] = await getUser(credential);
+      if (error) {
+        return [undefined, error];
+      }
+
+      setUserData(data);
+      return [{ credential, user: data }, undefined];
+    } catch (err) {
+      return [undefined, err as SignInError];
+    }
+  }, []);
+
+  const checkLocalUser = useCallback(async () => {
+    if (localUserChecked) {
+      return;
+    }
+
+    try {
+      const storedCredential = await SecureStore.getItemAsync('user.credential');
+      if (!storedCredential) {
+        return;
+      }
+
+      const { email, password }: Credential = credentialSchema.parse(JSON.parse(storedCredential));
+      await signIn(email, password);
+    } catch (err) {
+      console.error('[ AuthProvider(checkLocalUser) ]', err);
+    } finally {
+      setLocalUserChecked(true);
+    }
+  }, [localUserChecked]);
+
   const value = useMemo<AuthContextType>(
-    () => ({ credential: userCredential, isAuthorized, isFetchingLocalUser, signInUser, user: userData }),
-    [userCredential, isAuthorized, isFetchingLocalUser, userData]
+    () => ({ checkLocalUser, isAuthorized, localUserChecked, signIn, user: userData }),
+    [checkLocalUser, isAuthorized, localUserChecked, userData]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

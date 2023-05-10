@@ -1,10 +1,3 @@
-type Elevation = {
-  elevation: number;
-  shadowColor: string;
-  shadowOffset: { height: number; width: number };
-  shadowOpacity: number;
-  shadowRadius: number;
-};
 type Range = [number, number];
 
 const androidElevation = [
@@ -47,6 +40,14 @@ const interpolate = (value: number, x1: number, y1: number, x2: number, y2: numb
   const slopeRation = (y2 - x2) / (y1 - x1);
 
   return x2 + distFromStartPoint * slopeRation;
+};
+
+type Elevation = {
+  elevation: number;
+  shadowColor: string;
+  shadowOffset: { height: number; width: number };
+  shadowOpacity: number;
+  shadowRadius: number;
 };
 
 function elevation(): Elevation;

@@ -9,29 +9,30 @@ import Authorization from '@Screens/Authorization';
 import ManageRoutes from '@Screens/ManageRoutes';
 import Map from '@Screens/Map';
 
+SplashScreen.preventAutoHideAsync();
+
 export type StackParamList = { Authorization: undefined; ManageRoutes: undefined; Map: undefined };
 
 const Stack = createNativeStackNavigator<StackParamList>();
 
 let initialRouteName: keyof StackParamList = 'Authorization';
 
-SplashScreen.preventAutoHideAsync();
+const navigationReadyHandler = () => SplashScreen.hideAsync();
 
 const Navigation = () => {
-  const authCtx = useContext(AuthContext);
+  const { checkLocalUser, localUserChecked, user } = useContext(AuthContext);
 
-  if (authCtx.isFetchingLocalUser) {
+  if (!localUserChecked) {
+    checkLocalUser();
     return null;
   }
 
-  const appReadyHandler = async () => SplashScreen.hideAsync();
-
-  if (authCtx.user) {
-    initialRouteName = authCtx.user.role === 'dispatcher' ? 'ManageRoutes' : 'Map';
+  if (user) {
+    initialRouteName = user.role === 'dispatcher' ? 'ManageRoutes' : 'Map';
   }
 
   return (
-    <NavigationContainer onReady={appReadyHandler}>
+    <NavigationContainer onReady={navigationReadyHandler}>
       <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen component={Authorization} name="Authorization" options={{ headerShown: false }} />
         <Stack.Screen component={Map} name="Map" />
