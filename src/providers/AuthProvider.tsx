@@ -9,21 +9,26 @@ import { signInLocal } from '@Utils/firebase/firebase-auth';
 import { onUserData, UserDataListener } from '@Utils/firebase/firebase-database';
 
 const userCredentialSchema = z.object({ email: z.string(), password: z.string() });
-const userDataSchema = z.object({ role: z.enum(['dispatcher', 'driver']) });
+export const userDataSchema = z.object({ fullName: z.string(), role: z.enum(['dispatcher', 'driver']) });
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 type SignInUserResult = [UserCredential, undefined] | [undefined, Error | FirebaseError | UnavailabilityError];
 type AuthContextType = {
   credential?: UserCredential;
   isAuthorized: boolean;
-  isFetching: boolean;
-  signInUser: (email: string, password: string) => Promise<SignInUserResult>;
+  isFetchingLocalUser: boolean;
+  signInUser: (
+    email: string,
+    password: string,
+    safeLocally?: boolean,
+    userDataListener?: UserDataListener
+  ) => Promise<SignInUserResult>;
   user?: UserData;
 };
-type UserData = z.infer<typeof userDataSchema>;
+export type UserData = z.infer<typeof userDataSchema>;
 
 export default function AuthProvider({ children }: PropsWithChildren) {
-  const [isFetching, setIsFetching] = useState(true);
+  const [isFetchingLocalUser, setIsFetchingLocalUser] = useState(true);
   const [userCredential, setUserCredential] = useState<UserCredential>();
   const [userData, setUserData] = useState<UserData>();
 
@@ -35,52 +40,59 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       setUserData(data);
     } catch (err) {
       console.error('[ AuthProvider(userDataListener) ]', err);
+    } finally {
+      setIsFetchingLocalUser(false);
     }
-
-    setIsFetching(false);
   };
 
-  const signInUser = useCallback(async (email: string, password: string): Promise<SignInUserResult> => {
-    try {
-      const credential = await signInLocal(email, password);
-      await SecureStore.setItemAsync('user.credential', JSON.stringify({ email, password }));
-      setUserCredential(credential);
-      return [credential, undefined];
-    } catch (err) {
-      console.error('[ AuthProvider(signInUser) ]', err);
-      const error = err as Error | FirebaseError | UnavailabilityError;
-      return [undefined, error];
-    }
-  }, []);
+  const signInUser = useCallback(
+    async (
+      email: string,
+      password: string,
+      saveLocally = false,
+      listener?: UserDataListener
+    ): Promise<SignInUserResult> => {
+      try {
+        const credential = await signInLocal(email, password);
+
+        if (saveLocally) {
+          await SecureStore.setItemAsync('user.credential', JSON.stringify({ email, password }));
+        }
+
+        listener && onUserData(credential.user.uid, listener);
+        setUserCredential(credential);
+
+        return [credential, undefined];
+      } catch (err) {
+        console.error('[ AuthProvider(signInUser) ]', err);
+        return [undefined, err as Error | FirebaseError | UnavailabilityError];
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     (async () => {
       try {
         const serializedCredential = await SecureStore.getItemAsync('user.credential');
-        if (serializedCredential) {
-          const { email, password } = userCredentialSchema.parse(JSON.parse(serializedCredential));
-          const credential = await signInLocal(email, password);
-          setUserCredential(credential);
+        if (!serializedCredential) {
+          setIsFetchingLocalUser(false);
           return;
         }
-      } catch (err) {
-        console.error('[ AuthProvider|useEffect| ]:', err);
-      }
 
-      setIsFetching(false);
+        const { email, password } = userCredentialSchema.parse(JSON.parse(serializedCredential));
+        const [, error] = await signInUser(email, password, false, userDataListener);
+        error && setIsFetchingLocalUser(false);
+      } catch (err) {
+        console.error('[ AuthProvider|useEffect| ]', err);
+        setIsFetchingLocalUser(false);
+      }
     })();
   }, []);
 
-  useEffect(() => {
-    if (userCredential) {
-      const unsubscribe = onUserData(userCredential.user.uid, userDataListener);
-      return () => unsubscribe();
-    }
-  }, [userCredential]);
-
   const value = useMemo<AuthContextType>(
-    () => ({ credential: userCredential, isAuthorized, isFetching, signInUser, user: userData }),
-    [userCredential, isAuthorized, isFetching, userData]
+    () => ({ credential: userCredential, isAuthorized, isFetchingLocalUser, signInUser, user: userData }),
+    [userCredential, isAuthorized, isFetchingLocalUser, userData]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

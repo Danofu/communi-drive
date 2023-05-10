@@ -6,7 +6,8 @@ import { Keyboard, TextInput as RNTextInput, StyleSheet, View } from 'react-nati
 import { Button, HelperText, TextInput } from 'react-native-paper';
 import * as Yup from 'yup';
 
-import { AuthContext } from '@Providers/AuthProvider';
+import { AuthContext, UserData, userDataSchema } from '@Providers/AuthProvider';
+import { UserDataListener, onUserData } from '@Utils/firebase/firebase-database';
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email address').required('Email address is required'),
@@ -17,13 +18,23 @@ type FormikSubmitHandler = FormikConfig<{ email: string; password: string }>['on
 
 export type OnSubmit = (credential: UserCredential) => void | Promise<void>;
 export type OnSubmitError = (message: string) => void | Promise<void>;
+export type OnUserData = (data?: UserData, error?: Error) => void | Promise<void>;
 
-type Props = { onSubmit?: OnSubmit; onSubmitError?: OnSubmitError };
+type Props = { onSubmit?: OnSubmit; onSubmitError?: OnSubmitError; onUserData?: OnUserData };
 
-export default function SignInForm({ onSubmit, onSubmitError }: Props) {
+export default function SignInForm({ onSubmit, onSubmitError, onUserData }: Props) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const authCtx = useContext(AuthContext);
   const passwordInputRef = useRef<RNTextInput>(null);
+
+  const userDataListener: UserDataListener = (snapshot) => {
+    try {
+      const data = userDataSchema.parse(snapshot.val());
+      onUserData && onUserData(data, undefined);
+    } catch (err) {
+      onUserData && onUserData(undefined, err as Error);
+    }
+  };
 
   const passwordVisibilityHandler = () => setIsPasswordVisible((isVisible) => !isVisible);
 
@@ -31,21 +42,20 @@ export default function SignInForm({ onSubmit, onSubmitError }: Props) {
 
   const submitHandler: FormikSubmitHandler = async ({ email, password }, helpers) => {
     Keyboard.dismiss();
-    const [credential, error] = await authCtx.signInUser(email, password);
+    const [credential, error] = await authCtx.signInUser(email, password, true, userDataListener);
 
     if (error) {
       let errorMessage = 'Something went wrong';
       if (error instanceof FirebaseError && ['auth/user-not-found', 'auth/wrong-password'].includes(error.code)) {
         errorMessage = 'Provided credentials are invalid';
-        return;
       }
 
       helpers.setFieldValue('password', '');
-      await onSubmitError?.(errorMessage);
+      onSubmitError && onSubmitError(errorMessage);
       return;
     }
 
-    await onSubmit?.(credential);
+    onSubmit && onSubmit(credential);
   };
 
   return (

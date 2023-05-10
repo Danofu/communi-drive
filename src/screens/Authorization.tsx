@@ -1,10 +1,9 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useContext, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Snackbar, Text, useTheme } from 'react-native-paper';
 
-import SignInForm from '@Components/SignInForm';
-import { AuthContext } from '@Providers/AuthProvider';
+import SignInForm, { OnUserData } from '@Components/SignInForm';
 import elevation from '@Utils/elevation';
 import { StackParamList } from 'App';
 
@@ -13,15 +12,16 @@ type Props = NativeStackScreenProps<StackParamList, 'Authorization'>;
 export default function Authorization({ navigation }: Props) {
   const [signInErrorMessage, setSignInErrorMessage] = useState<string>();
   const { colors } = useTheme();
-  const authCtx = useContext(AuthContext);
 
   const errorMassageDismissHandler = () => setSignInErrorMessage(undefined);
 
-  useEffect(() => {
-    if (authCtx.user) {
-      navigation.replace(authCtx.user.role === 'dispatcher' ? 'ManageRoutes' : 'Map');
+  const userDataHandler: OnUserData = (data, error) => {
+    if (error) {
+      return;
     }
-  }, [authCtx.user]);
+
+    data && navigation.replace(data.role === 'dispatcher' ? 'ManageRoutes' : 'Map');
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -31,7 +31,7 @@ export default function Authorization({ navigation }: Props) {
             <Text style={styles.headerText} variant="headlineMedium">
               Welcome
             </Text>
-            <SignInForm onSubmitError={setSignInErrorMessage} />
+            <SignInForm onSubmitError={setSignInErrorMessage} onUserData={userDataHandler} />
           </View>
         </KeyboardAvoidingView>
         <Snackbar

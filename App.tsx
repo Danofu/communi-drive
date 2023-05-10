@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SplashScreen from 'expo-splash-screen';
-import { useContext, useEffect } from 'react';
+import { useContext } from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
 
 import AuthProvider, { AuthContext } from '@Providers/AuthProvider';
@@ -20,22 +20,18 @@ SplashScreen.preventAutoHideAsync();
 const Navigation = () => {
   const authCtx = useContext(AuthContext);
 
-  useEffect(() => {
-    if (!authCtx.isFetching) {
-      SplashScreen.hideAsync();
-    }
-  }, [authCtx.isFetching]);
-
-  if (authCtx.isFetching) {
+  if (authCtx.isFetchingLocalUser) {
     return null;
   }
+
+  const appReadyHandler = async () => SplashScreen.hideAsync();
 
   if (authCtx.user) {
     initialRouteName = authCtx.user.role === 'dispatcher' ? 'ManageRoutes' : 'Map';
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer onReady={appReadyHandler}>
       <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen component={Authorization} name="Authorization" options={{ headerShown: false }} />
         <Stack.Screen component={Map} name="Map" />
