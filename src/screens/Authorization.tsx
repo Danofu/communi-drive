@@ -52,11 +52,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 8,
     justifyContent: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 32,
     width: '100%',
   },
   headerText: {
-    marginVertical: 16,
     textAlign: 'center',
   },
   root: {
