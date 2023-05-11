@@ -25,44 +25,42 @@ export default function InnerForm({
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputsContainer}>
-        <View>
-          <TextInput
-            autoCapitalize="none"
-            autoComplete="email"
-            autoCorrect={false}
-            autoFocus
-            blurOnSubmit={false}
-            error={touched.email && !!errors.email}
-            keyboardType="email-address"
-            label="Email *"
-            mode="outlined"
-            onBlur={handleBlur('email')}
-            onChangeText={handleChange('email')}
-            onSubmitEditing={emailEditedHandler}
-            placeholder="Your email ..."
-            value={values.email}
-          />
-          {touched.email && errors.email && <HelperText type="error">{errors.email}</HelperText>}
-        </View>
-        <View>
-          <TextInput
-            autoCapitalize="none"
-            autoComplete="password"
-            autoCorrect={false}
-            error={touched.password && !!errors.password}
-            label="Password *"
-            mode="outlined"
-            onBlur={handleBlur('password')}
-            onChangeText={handleChange('password')}
-            placeholder="Your password ..."
-            ref={passwordInputRef}
-            right={<TextInput.Icon icon={isPasswordVisible ? 'eye-off' : 'eye'} onPress={passwordVisibilityHandler} />}
-            secureTextEntry={!isPasswordVisible}
-            value={values.password}
-          />
-          {touched.password && errors.password && <HelperText type="error">{errors.password}</HelperText>}
-        </View>
+      <View>
+        <TextInput
+          autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
+          autoFocus
+          blurOnSubmit={false}
+          error={touched.email && !!errors.email}
+          keyboardType="email-address"
+          label="Email *"
+          mode="outlined"
+          onBlur={handleBlur('email')}
+          onChangeText={handleChange('email')}
+          onSubmitEditing={emailEditedHandler}
+          placeholder="Your email ..."
+          value={values.email}
+        />
+        {touched.email && errors.email && <HelperText type="error">{errors.email}</HelperText>}
+      </View>
+      <View>
+        <TextInput
+          autoCapitalize="none"
+          autoComplete="password"
+          autoCorrect={false}
+          error={touched.password && !!errors.password}
+          label="Password *"
+          mode="outlined"
+          onBlur={handleBlur('password')}
+          onChangeText={handleChange('password')}
+          placeholder="Your password ..."
+          ref={passwordInputRef}
+          right={<TextInput.Icon icon={isPasswordVisible ? 'eye-off' : 'eye'} onPress={passwordVisibilityHandler} />}
+          secureTextEntry={!isPasswordVisible}
+          value={values.password}
+        />
+        {touched.password && errors.password && <HelperText type="error">{errors.password}</HelperText>}
       </View>
       <Button
         disabled={isSubmitting}
@@ -79,13 +77,12 @@ export default function InnerForm({
 
 const styles = StyleSheet.create({
   button: {
-    marginTop: 32,
+    marginTop: 12,
   },
   container: {
     width: '100%',
-    marginVertical: 12,
-  },
-  inputsContainer: {
     gap: 12,
+    marginVertical: 24,
   },
+  inputsContainer: {},
 });
