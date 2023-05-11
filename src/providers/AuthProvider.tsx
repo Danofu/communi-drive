@@ -27,6 +27,7 @@ type AuthContextType = {
   isAuthorized: boolean;
   localUserChecked: boolean;
   signIn: SignIn;
+  signOut: () => Promise<void>;
   user: UserData | null;
 };
 
@@ -74,6 +75,13 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const signOut = useCallback(async () => {
+    await auth.signOut();
+    await SecureStore.deleteItemAsync('user.credential');
+    setUserData(null);
+    setUserCredential(null);
+  }, []);
+
   const checkLocalUser = useCallback(async () => {
     if (localUserChecked) {
       return;
@@ -95,7 +103,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, [localUserChecked]);
 
   const value = useMemo<AuthContextType>(
-    () => ({ checkLocalUser, isAuthorized, localUserChecked, signIn, user: userData }),
+    () => ({ checkLocalUser, isAuthorized, localUserChecked, signIn, signOut, user: userData }),
     [checkLocalUser, isAuthorized, localUserChecked, userData]
   );
 
