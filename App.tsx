@@ -1,9 +1,10 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SplashScreen from 'expo-splash-screen';
-import { useContext } from 'react';
+import { ComponentProps, useContext } from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
 
+import HeaderSignOutButton from '@Components/SignOut/HeaderSignOutButton';
 import AuthProvider, { AuthContext } from '@Providers/AuthProvider';
 import Authorization from '@Screens/Authorization';
 import ManageRoutes from '@Screens/ManageRoutes';
@@ -31,12 +32,18 @@ const Navigation = () => {
     initialRouteName = user.role === 'dispatcher' ? 'ManageRoutes' : 'Map';
   }
 
+  const homeScreenOptions: ComponentProps<typeof Stack.Group>['screenOptions'] = ({ navigation }) => ({
+    headerRight: ({ tintColor }) => <HeaderSignOutButton iconColor={tintColor} navigation={navigation} />,
+  });
+
   return (
     <NavigationContainer onReady={navigationReadyHandler}>
       <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen component={Authorization} name="Authorization" options={{ headerShown: false }} />
-        <Stack.Screen component={Map} name="Map" />
-        <Stack.Screen component={ManageRoutes} name="ManageRoutes" />
+        <Stack.Group screenOptions={homeScreenOptions}>
+          <Stack.Screen component={Map} name="Map" />
+          <Stack.Screen component={ManageRoutes} name="ManageRoutes" options={{ headerTitle: 'Routes Management' }} />
+        </Stack.Group>
       </Stack.Navigator>
     </NavigationContainer>
   );
