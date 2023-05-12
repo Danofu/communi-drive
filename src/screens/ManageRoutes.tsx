@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
-import DriversPicker from '@Components/DriversPicker';
+import DriverPicker from '@Components/DriverPicker';
 import SectionCard from '@Components/UI/SectionCard';
 
 export default function ManageRoutes() {
@@ -15,7 +15,7 @@ export default function ManageRoutes() {
         <Text style={styles.driverPickerLabel} variant="titleMedium">
           Please select a driver to whom to assign the route
         </Text>
-        <DriversPicker onValueChange={setSelectedDriver} value={selectedDriver} />
+        <DriverPicker onValueChange={setSelectedDriver} value={selectedDriver} />
       </SectionCard>
     </View>
   );

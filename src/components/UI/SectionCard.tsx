@@ -11,8 +11,8 @@ const styles = StyleSheet.create({
   card: {
     ...elevation(3),
     backgroundColor: 'white',
-    paddingVertical: 20,
     paddingHorizontal: 15,
+    paddingVertical: 20,
     width: '100%',
   },
 });
