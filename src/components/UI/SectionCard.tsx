@@ -1,18 +1,19 @@
 import { PropsWithChildren } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import elevation from '@Utils/elevation';
 
-export default function SectionCard({ children }: PropsWithChildren) {
-  return <View style={styles.card}>{children}</View>;
+type Props = PropsWithChildren<{ style?: StyleProp<ViewStyle> }>;
+
+export default function SectionCard({ children, style }: Props) {
+  return <View style={[styles.card, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
-    ...elevation(3),
+    ...elevation(1),
     backgroundColor: 'white',
-    paddingHorizontal: 15,
-    paddingVertical: 20,
+    padding: 15,
     width: '100%',
   },
 });

@@ -71,7 +71,7 @@ export default function InnerForm({
         onPress={submitHandler}
         style={styles.button}
       >
-        {isSubmitting ? 'Signing In ...' : 'Sign In'}
+        {isSubmitting ? 'SIGNING IN ...' : 'SIGN IN'}
       </Button>
     </View>
   );

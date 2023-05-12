@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { ComponentProps, useContext } from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
 
@@ -51,10 +52,13 @@ const Navigation = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <PaperProvider>
-        <Navigation />
-      </PaperProvider>
-    </AuthProvider>
+    <>
+      <AuthProvider>
+        <PaperProvider>
+          <Navigation />
+        </PaperProvider>
+      </AuthProvider>
+      <StatusBar style="auto" />
+    </>
   );
 }
