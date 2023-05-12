@@ -7,43 +7,31 @@ import { z as zod } from 'zod';
 
 import HeaderSignOutButton from '@Components/SignOut/HeaderSignOutButton';
 import { UserData, userDataSchema } from '@Providers/AuthProvider';
-import { Listener, getUserData, onDriverIds } from '@Utils/firebase/firebase-database';
+import { Listener, onDrivers } from '@Utils/firebase/firebase-database';
 import parseSnapshot from '@Utils/parseSnapshot';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StackParamList } from 'App';
 
-const driverIdsSchema = zod.array(zod.string());
-
-export type DriverData = UserData & { uid: string };
+const driversSchema = zod.record(zod.string(), userDataSchema);
 
 export default function DriversPicker() {
-  const [, setUnsubscribe] = useState<Unsubscribe | null>(null);
-  const [fetchedDrivers, setFetchedDrivers] = useState<DriverData[]>([]);
+  const [fetchedDrivers, setFetchedDrivers] = useState<UserData[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<StackParamList, 'ManageRoutes'>>();
 
+  const [, setUnsubscribe] = useState<Unsubscribe | null>(null);
+
   const driversListener = useCallback<Listener>(async (snapshot) => {
     try {
-      const driverIds = parseSnapshot(snapshot, driverIdsSchema) || [];
-      const drivers: DriverData[] = [];
-
-      for await (const id of driverIds) {
-        const driver = parseSnapshot(await getUserData(id), userDataSchema);
-        if (!driver) {
-          continue;
-        }
-
-        drivers.push({ uid: id, ...driver });
-      }
-
-      setFetchedDrivers(drivers);
+      const drivers = parseSnapshot(snapshot, driversSchema) || {};
+      setFetchedDrivers(Object.values(drivers));
     } catch (err) {
       console.error('[ DriversPicker(driversListener) ]', err);
     }
   }, []);
 
   const pickerVisibleHandler = () => {
-    const unsubscribe = onDriverIds(driversListener);
+    const unsubscribe = onDrivers(driversListener);
 
     const signOutHandler = () => unsubscribe();
 
