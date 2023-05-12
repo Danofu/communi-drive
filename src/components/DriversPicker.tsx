@@ -1,5 +1,6 @@
-import { Picker } from '@react-native-picker/picker';
+import { Picker, PickerProps } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Unsubscribe } from 'firebase/database';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
@@ -9,14 +10,14 @@ import HeaderSignOutButton from '@Components/SignOut/HeaderSignOutButton';
 import { UserData, userDataSchema } from '@Providers/AuthProvider';
 import { Listener, onDrivers } from '@Utils/firebase/firebase-database';
 import parseSnapshot from '@Utils/parseSnapshot';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StackParamList } from 'App';
 
 const driversSchema = zod.record(zod.string(), userDataSchema);
 
-export default function DriversPicker() {
+type Props = { onValueChange?: PickerProps['onValueChange']; value?: PickerProps['selectedValue'] };
+
+export default function DriversPicker({ onValueChange, value }: Props) {
   const [fetchedDrivers, setFetchedDrivers] = useState<UserData[]>([]);
-  const [selectedDriverId, setSelectedDriverId] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<StackParamList, 'ManageRoutes'>>();
 
   const [, setUnsubscribe] = useState<Unsubscribe | null>(null);
@@ -51,7 +52,7 @@ export default function DriversPicker() {
 
   return (
     <View onLayout={pickerVisibleHandler}>
-      <Picker mode="dropdown" onValueChange={setSelectedDriverId} selectedValue={selectedDriverId}>
+      <Picker mode="dropdown" onValueChange={onValueChange} selectedValue={value}>
         <Picker.Item label="No driver selected" value="" />
         {fetchedDrivers.map((driver) => (
           <Picker.Item key={driver.uid} label={driver.fullName} value={driver.uid} />
