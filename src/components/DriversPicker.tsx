@@ -8,6 +8,7 @@ import { z as zod } from 'zod';
 import HeaderSignOutButton from '@Components/SignOut/HeaderSignOutButton';
 import { UserData, userDataSchema } from '@Providers/AuthProvider';
 import { Listener, getUserData, onDriverIds } from '@Utils/firebase/firebase-database';
+import parseSnapshot from '@Utils/parseSnapshot';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StackParamList } from 'App';
 
@@ -21,23 +22,17 @@ export default function DriversPicker() {
   const [selectedDriverId, setSelectedDriverId] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<StackParamList, 'ManageRoutes'>>();
 
-  const driversListener = useCallback<Listener>(async (idsSnapshot) => {
-    if (!idsSnapshot.exists()) {
-      return;
-    }
-
+  const driversListener = useCallback<Listener>(async (snapshot) => {
     try {
-      const driverIds = driverIdsSchema.parse(idsSnapshot.val());
+      const driverIds = parseSnapshot(snapshot, driverIdsSchema) || [];
       const drivers: DriverData[] = [];
 
       for await (const id of driverIds) {
-        const driverSnapshot = await getUserData(id);
-
-        if (!driverSnapshot.exists()) {
-          return;
+        const driver = parseSnapshot(await getUserData(id), userDataSchema);
+        if (!driver) {
+          continue;
         }
 
-        const driver = userDataSchema.parse(driverSnapshot.val());
         drivers.push({ uid: id, ...driver });
       }
 

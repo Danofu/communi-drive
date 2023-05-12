@@ -7,6 +7,7 @@ import { z as zod, ZodError } from 'zod';
 
 import { auth } from '@Utils/firebase/firebase-auth';
 import { getUserData } from '@Utils/firebase/firebase-database';
+import parseSnapshot from '@Utils/parseSnapshot';
 
 export const userDataSchema = zod.object({ fullName: zod.string(), role: zod.enum(['dispatcher', 'driver']) });
 export type UserData = zod.infer<typeof userDataSchema>;
@@ -42,12 +43,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
   const getUser = useCallback<GetUser>(async (credential) => {
     try {
-      const snapshot = await getUserData(credential.user.uid);
-      if (!snapshot.exists()) {
-        return [null, undefined];
-      }
-
-      const data = userDataSchema.parse(snapshot.val());
+      const data = parseSnapshot(await getUserData(credential.user.uid), userDataSchema);
       return [data, undefined];
     } catch (err) {
       return [undefined, err as GetUserError];
