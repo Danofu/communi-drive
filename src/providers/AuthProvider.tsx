@@ -3,16 +3,16 @@ import * as SecureStore from 'expo-secure-store';
 import { FirebaseError } from 'firebase/app';
 import { signInWithEmailAndPassword, UserCredential } from 'firebase/auth';
 import { createContext, PropsWithChildren, useCallback, useMemo, useState } from 'react';
-import { z, ZodError } from 'zod';
+import { z as zod, ZodError } from 'zod';
 
 import { auth } from '@Utils/firebase/firebase-auth';
 import { getUserData } from '@Utils/firebase/firebase-database';
 
-export const userDataSchema = z.object({ fullName: z.string(), role: z.enum(['dispatcher', 'driver']) });
-export type UserData = z.infer<typeof userDataSchema>;
+export const userDataSchema = zod.object({ fullName: zod.string(), role: zod.enum(['dispatcher', 'driver']) });
+export type UserData = zod.infer<typeof userDataSchema>;
 
-const credentialSchema = z.object({ email: z.string(), password: z.string() });
-type Credential = z.infer<typeof credentialSchema>;
+const credentialSchema = zod.object({ email: zod.string(), password: zod.string() });
+type Credential = zod.infer<typeof credentialSchema>;
 
 type GetUserError = Error | ZodError<UserData>;
 type GetUserResult = [UserData | null, undefined] | [undefined, GetUserError];

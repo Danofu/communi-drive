@@ -4,7 +4,7 @@ import firebaseApp from '@Utils/firebase/firebase-app';
 
 export const database = getDatabase(firebaseApp);
 
-export type UserDataObserver = Parameters<typeof onValue>[1];
+export type Listener = Parameters<typeof onValue>[1];
 
 export const getUserData = (uid: string) =>
   new Promise<DataSnapshot>((resolve, reject) =>
@@ -15,3 +15,5 @@ export const getUserData = (uid: string) =>
       { onlyOnce: true }
     )
   );
+
+export const onDriverIds = (listener: Listener) => onValue(ref(database, '/roles/drivers'), listener);

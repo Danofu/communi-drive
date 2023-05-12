@@ -21,7 +21,7 @@ export default function InnerForm({
 
   const submitHandler = () => handleSubmit();
 
-  const passwordVisibilityHandler = () => setIsPasswordVisible((prevState) => !prevState);
+  const passwordVisibilityHandler = () => setIsPasswordVisible((isPrevVisible) => !isPrevVisible);
 
   const emailEditedHandler = () => passwordInputRef.current?.focus();
 

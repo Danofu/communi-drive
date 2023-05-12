@@ -7,9 +7,17 @@ import SignOutDialog from '@Components/SignOut/SignOutDialog';
 import { AuthContext } from '@Providers/AuthProvider';
 import { StackParamList } from 'App';
 
-type Props = { iconColor?: IconButtonProps['iconColor']; navigation: NativeStackNavigationProp<StackParamList> };
+type Props<T extends keyof StackParamList> = {
+  iconColor?: IconButtonProps['iconColor'];
+  navigation: NativeStackNavigationProp<StackParamList, T>;
+  onSignOut?: () => void | Promise<void>;
+};
 
-export default function HeaderSignOutButton({ iconColor, navigation }: Props) {
+export default function HeaderSignOutButton<T extends keyof StackParamList>({
+  iconColor,
+  navigation,
+  onSignOut = () => undefined,
+}: Props<T>) {
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const { signOut } = useContext(AuthContext);
 
@@ -18,6 +26,7 @@ export default function HeaderSignOutButton({ iconColor, navigation }: Props) {
   const dialogDismissHandler = () => setIsDialogVisible(false);
 
   const signOutHandler = async () => {
+    await onSignOut();
     setIsDialogVisible(false);
     await signOut();
     navigation.replace('Authorization');
