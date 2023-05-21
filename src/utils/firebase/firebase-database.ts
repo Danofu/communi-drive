@@ -1,4 +1,5 @@
 import { DataSnapshot, getDatabase, onValue, ref } from 'firebase/database';
+import { Moment } from 'moment';
 
 import { UserRole } from '@Providers/AuthProvider';
 import firebaseApp from '@Utils/firebase/firebase-app';
@@ -18,3 +19,6 @@ export const getUserData = (uid: string, role: UserRole) =>
   );
 
 export const onDrivers = (listener: Listener) => onValue(ref(database, '/users/driver'), listener);
+
+export const onPlaces = (uid: string, date: Moment, listener: Listener) =>
+  onValue(ref(database, `/routes/${uid}/${date.format('YYYY-MM-DD')}`), listener);

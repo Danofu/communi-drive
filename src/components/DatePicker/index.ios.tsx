@@ -8,7 +8,11 @@ import type { Props } from '@Components/DatePicker/types';
 export default function DatePicker({ onChange, style, value }: Props) {
   const { colors } = useTheme();
 
-  const dateChangeHandler = (_: DateTimePickerEvent, date?: Date) => {
+  const dateChangeHandler = (event: DateTimePickerEvent, date?: Date) => {
+    if (event.type !== 'set') {
+      return;
+    }
+
     if (onChange && date) {
       onChange(moment(date));
     }

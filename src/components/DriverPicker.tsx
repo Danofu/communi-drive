@@ -1,4 +1,4 @@
-import { Picker, PickerProps } from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Unsubscribe } from 'firebase/database';
@@ -15,7 +15,7 @@ import { StackParamList } from 'App';
 
 const driversSchema = zod.record(zod.string(), userDataSchema);
 
-type Props = { onValueChange?: PickerProps['onValueChange']; value?: PickerProps['selectedValue'] };
+type Props = { onValueChange?: (uid: string) => void; value?: string };
 
 export default function DriverPicker({ onValueChange, value }: Props) {
   const [fetchedDrivers, setFetchedDrivers] = useState<UserData[]>([]);
