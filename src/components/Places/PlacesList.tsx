@@ -37,7 +37,7 @@ export default function PlacesList({ driverUid, date }: Props) {
       data={placesList}
       keyExtractor={({ id }) => id}
       renderItem={({ item }) => <PlacesItem {...item} />}
-      style={styles.placesList}
+      style={styles.places}
     />
   );
 
@@ -56,12 +56,12 @@ const styles = StyleSheet.create({
   loading: {
     flex: 1,
   },
+  places: {
+    width: '100%',
+  },
   placesItemsContainer: {
     gap: 8,
     padding: 5,
-  },
-  placesList: {
-    width: '100%',
   },
   root: {
     flex: 1,

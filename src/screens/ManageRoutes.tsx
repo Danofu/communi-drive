@@ -1,3 +1,4 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import moment, { Moment } from 'moment';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -7,14 +8,19 @@ import DatePicker from '@Components/DatePicker';
 import DriverPicker from '@Components/DriverPicker';
 import PlacesList from '@Components/Places/PlacesList';
 import SectionCard from '@Components/UI/SectionCard';
+import { StackParamList } from 'App';
 
-export default function ManageRoutes() {
+type Props = NativeStackScreenProps<StackParamList, 'ManageRoutes'>;
+
+export default function ManageRoutes({ navigation }: Props) {
   const [pickedDate, setPickedDate] = useState(moment());
   const [selectedDriver, setSelectedDriver] = useState('');
 
   const datePickHandler = async (date: Moment) => {
     setPickedDate(date);
   };
+
+  const openMapHandler = () => navigation.navigate('SelectPlace', { type: 'Add' });
 
   return (
     <View style={styles.root}>
@@ -25,13 +31,15 @@ export default function ManageRoutes() {
         <DriverPicker onValueChange={setSelectedDriver} value={selectedDriver} />
       </SectionCard>
       {selectedDriver && (
-        <SectionCard style={styles.routesContainer}>
+        <SectionCard style={styles.placesContainer}>
           <View style={styles.datePickerContainer}>
             <Text variant="titleMedium">Choose a date:</Text>
             <DatePicker onChange={datePickHandler} style={styles.datePicker} value={pickedDate} />
           </View>
           <PlacesList date={pickedDate} driverUid={selectedDriver} />
-          <Button mode="contained">ADD PLACE</Button>
+          <Button mode="contained" onPress={openMapHandler}>
+            ADD PLACE
+          </Button>
         </SectionCard>
       )}
     </View>
@@ -51,13 +59,13 @@ const styles = StyleSheet.create({
   driverPickerLabel: {
     textAlign: 'left',
   },
+  placesContainer: {
+    flex: 1,
+    gap: 10,
+  },
   root: {
     flex: 1,
     gap: 10,
     paddingVertical: 20,
-  },
-  routesContainer: {
-    flex: 1,
-    gap: 10,
   },
 });
