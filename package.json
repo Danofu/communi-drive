@@ -5,6 +5,7 @@
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/native-stack": "^6.9.12",
     "expo": "~48.0.15",
+    "expo-crypto": "~12.2.1",
     "expo-secure-store": "~12.1.1",
     "expo-splash-screen": "~0.18.2",
     "expo-status-bar": "~1.4.4",
@@ -37,6 +38,7 @@
   "private": true,
   "scripts": {
     "android": "expo start --android",
+    "check": "tsc --noEmit",
     "format": "prettier --write **/*.{json,ts,tsx}",
     "ios": "expo start --ios",
     "lint": "eslint --ext .ts,.tsx .",

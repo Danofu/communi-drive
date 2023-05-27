@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Moment } from 'moment';
 import { StyleSheet, View } from 'react-native';
 import { Button, Text, useTheme } from 'react-native-paper';
 
@@ -7,24 +8,31 @@ import { Place } from '@Components/Places/PlacesList';
 import elevation from '@Utils/elevation';
 import { StackParamList } from 'App';
 
-type Props = Place & { id: string };
+type Props = { date: Moment; driverUid: string; place: Place };
 
-export default function PlacesItem({ id, lat, lng, name }: Props) {
+export default function PlacesItem({ date, driverUid, place }: Props) {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<StackParamList>>();
 
   const editPlaceHandler = () =>
     navigation.navigate('SelectPlace', {
-      marker: { coords: { latitude: lat, longitude: lng }, title: name },
+      date: date.toISOString(),
+      driverUid,
+      place: {
+        address: place.address,
+        coords: { latitude: place.lat, longitude: place.lng },
+        description: `${place.lat}, ${place.lng}`,
+        id: place.id,
+      },
       type: 'Edit',
     });
 
   return (
     <View style={styles.root}>
       <View style={styles.infoContainer}>
-        <Text variant="bodyLarge">{name}</Text>
+        <Text variant="bodyLarge">{place.address}</Text>
         <Text style={{ color: colors.primary }} variant="labelSmall">
-          {lat}, {lng}
+          {place.lat}, {place.lng}
         </Text>
       </View>
       <View style={styles.actionContainer}>

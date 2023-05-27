@@ -44,6 +44,7 @@ export default function InnerForm({
         onSubmitEditing={emailEditedHandler}
         placeholder="Your email ..."
         required
+        returnKeyType="next"
         value={values.email}
       />
       <TextInputWithHelperText
@@ -57,9 +58,11 @@ export default function InnerForm({
         mode="outlined"
         onBlur={handleBlur('password')}
         onChangeText={handleChange('password')}
+        onSubmitEditing={submitHandler}
         placeholder="Your password ..."
         ref={passwordInputRef}
         required
+        returnKeyType="done"
         right={<TextInput.Icon icon={isPasswordVisible ? 'eye-off' : 'eye'} onPress={passwordVisibilityHandler} />}
         secureTextEntry={!isPasswordVisible}
         value={values.password}

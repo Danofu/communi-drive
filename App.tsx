@@ -15,16 +15,20 @@ import SelectPlace from '@Screens/SelectPlace';
 
 SplashScreen.preventAutoHideAsync();
 
-type MarkerInfo = {
+type PlaceInfo = {
+  address: string;
   coords: LatLng;
-  title: string;
+  description: string;
+  id?: string;
 };
 
 export type StackParamList = {
   Authorization: undefined;
   ManageRoutes: undefined;
   Map: undefined;
-  SelectPlace: { marker?: undefined; type: 'Add' } | { marker: MarkerInfo; type: 'Edit' };
+  SelectPlace:
+    | { date: string; driverUid: string; place?: undefined; type: 'Add' }
+    | { date: string; driverUid: string; place: PlaceInfo; type: 'Edit' };
 };
 
 const Stack = createNativeStackNavigator<StackParamList>();

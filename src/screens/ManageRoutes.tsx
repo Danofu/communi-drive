@@ -20,7 +20,8 @@ export default function ManageRoutes({ navigation }: Props) {
     setPickedDate(date);
   };
 
-  const openMapHandler = () => navigation.navigate('SelectPlace', { type: 'Add' });
+  const openMapHandler = () =>
+    navigation.navigate('SelectPlace', { date: pickedDate.toISOString(), driverUid: selectedDriver, type: 'Add' });
 
   return (
     <View style={styles.root}>

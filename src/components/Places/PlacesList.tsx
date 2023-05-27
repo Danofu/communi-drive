@@ -8,7 +8,10 @@ import PlacesItem from '@Components/Places/PlacesItem';
 import { Listener, onPlaces } from '@Utils/firebase/firebase-database';
 import parseSnapshot from '@Utils/parseSnapshot';
 
-const placesSchema = zod.record(zod.string(), zod.object({ lat: zod.number(), lng: zod.number(), name: zod.string() }));
+const placesSchema = zod.record(
+  zod.string(),
+  zod.object({ address: zod.string(), id: zod.string(), lat: zod.number(), lng: zod.number() })
+);
 type Places = zod.infer<typeof placesSchema>;
 export type Place = Places[string];
 
@@ -18,7 +21,7 @@ export default function PlacesList({ driverUid, date }: Props) {
   const [fetchedPlaces, setFetchedPlaces] = useState<Places | null>(null);
   const [isFetching, setIsFetching] = useState(true);
 
-  const placesList = Object.entries(fetchedPlaces || {}).map(([id, place]) => ({ id, ...place }));
+  const placesList = Object.entries(fetchedPlaces || {}).map(([id, place]) => ({ date, driverUid, id, place }));
 
   const placesListener = useCallback<Listener>(async (snapshot) => {
     const places = parseSnapshot(snapshot, placesSchema);

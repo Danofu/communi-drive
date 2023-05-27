@@ -15,7 +15,7 @@ export const reverseGeocodeByCoords: ReverseGeocodeByCoords = async ({ latitude,
   const params: URLSearchParams = new URLSearchParams();
   params.append('key', FIREBASE_WEB_API_KEY);
   params.append('latlng', `${latitude},${longitude}`);
-  params.append('result_type', 'street_address');
+  // params.append('result_type', 'street_address');
   const url = `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`;
 
   const response: Response = await fetch(url);
