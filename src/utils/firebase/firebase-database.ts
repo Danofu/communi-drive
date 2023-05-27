@@ -1,5 +1,5 @@
 import * as Crypto from 'expo-crypto';
-import { DataSnapshot, getDatabase, onValue, ref, set } from 'firebase/database';
+import { DataSnapshot, getDatabase, onValue, ref, remove, set } from 'firebase/database';
 import { Moment } from 'moment';
 
 import { UserRole } from '@Providers/AuthProvider';
@@ -31,3 +31,8 @@ export const setPlace: SetPlace = async (uid, date, place) => {
   place.id = place.id || Crypto.randomUUID();
   set(ref(database, `routes/${uid}/${date.format('YYYY-MM-DD')}/${place.id}`), place);
 };
+
+type DeletePlace = (uid: string, date: Moment, placeId: string) => Promise<void>;
+
+export const deletePlace: DeletePlace = (uid, date, placeId) =>
+  remove(ref(database, `routes/${uid}/${date.format('YYYY-MM-DD')}/${placeId}`));

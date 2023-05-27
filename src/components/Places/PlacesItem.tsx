@@ -7,6 +7,7 @@ import { Button, Text, useTheme } from 'react-native-paper';
 import { Place } from '@Components/Places/PlacesList';
 import elevation from '@Utils/elevation';
 import { StackParamList } from 'App';
+import { deletePlace } from '@Utils/firebase/firebase-database';
 
 type Props = { date: Moment; driverUid: string; place: Place };
 
@@ -27,6 +28,8 @@ export default function PlacesItem({ date, driverUid, place }: Props) {
       type: 'Edit',
     });
 
+  const deletePlaceHandler = () => deletePlace(driverUid, date, place.id);
+
   return (
     <View style={styles.root}>
       <View style={styles.infoContainer}>
@@ -36,7 +39,9 @@ export default function PlacesItem({ date, driverUid, place }: Props) {
         </Text>
       </View>
       <View style={styles.actionContainer}>
-        <Button textColor={colors.error}>Delete</Button>
+        <Button onPress={deletePlaceHandler} textColor={colors.error}>
+          Delete
+        </Button>
         <Button onPress={editPlaceHandler} textColor={colors.primary}>
           Edit
         </Button>
