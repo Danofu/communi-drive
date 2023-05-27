@@ -21,7 +21,7 @@ export default function PlacesItem({ date, driverUid, place }: Props) {
       place: {
         address: place.address,
         coords: { latitude: place.lat, longitude: place.lng },
-        description: `${place.lat}, ${place.lng}`,
+        description: `${place.lat.toFixed(7)}, ${place.lng.toFixed(7)}`,
         id: place.id,
       },
       type: 'Edit',
@@ -32,7 +32,7 @@ export default function PlacesItem({ date, driverUid, place }: Props) {
       <View style={styles.infoContainer}>
         <Text variant="bodyLarge">{place.address}</Text>
         <Text style={{ color: colors.primary }} variant="labelSmall">
-          {place.lat}, {place.lng}
+          {place.lat.toFixed(7)}, {place.lng.toFixed(7)}
         </Text>
       </View>
       <View style={styles.actionContainer}>

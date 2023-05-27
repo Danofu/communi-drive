@@ -34,7 +34,7 @@ export default function SelectPlace({ navigation, route }: Props) {
   const [markerTitle, setMarkerTitle] = useState<string | undefined>(params?.place?.address);
 
   const markerDescription = markerCoords
-    ? `${markerCoords.latitude}, ${markerCoords.longitude}`
+    ? `${markerCoords.latitude.toFixed(7)}, ${markerCoords.longitude.toFixed(7)}`
     : params.place?.description;
 
   const savePlaceHandler: IconButtonProps['onPress'] = () => {
