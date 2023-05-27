@@ -54,7 +54,7 @@ const Navigation = () => {
       <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen component={Authorization} name="Authorization" options={{ headerShown: false }} />
         <Stack.Group screenOptions={homeScreenOptions}>
-          <Stack.Screen component={ManageRoutes} name="ManageRoutes" options={{ headerTitle: 'Routes Management' }} />
+          <Stack.Screen component={ManageRoutes} name="ManageRoutes" options={{ title: 'Routes Management' }} />
           <Stack.Screen component={Map} name="Map" />
         </Stack.Group>
         <Stack.Screen component={SelectPlace} name="SelectPlace" />

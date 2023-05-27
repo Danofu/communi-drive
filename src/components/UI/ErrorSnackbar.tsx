@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react';
 import { Snackbar, SnackbarProps, Text, useTheme } from 'react-native-paper';
 
-type Props = PropsWithChildren<{ onDismiss: SnackbarProps['onDismiss']; visible: SnackbarProps['visible'] }>;
+export type Props = PropsWithChildren<{ onDismiss: SnackbarProps['onDismiss']; visible: SnackbarProps['visible'] }>;
 
 export default function ErrorSnackbar({ children, onDismiss, visible }: Props) {
   const { colors } = useTheme();
