@@ -45,7 +45,7 @@ export default function SignInForm({ onSubmit }: Props) {
   return (
     <Formik
       component={InnerForm}
-      initialValues={{ email: '', password: '' }}
+      initialValues={{ email: 'danofu+driver@gmail.com', password: '752984136' }}
       onSubmit={submitHandler}
       validationSchema={validationSchema}
     />

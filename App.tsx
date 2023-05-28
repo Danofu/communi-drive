@@ -9,8 +9,8 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import HeaderSignOutButton from '@Components/SignOut/HeaderSignOutButton';
 import AuthProvider, { AuthContext } from '@Providers/AuthProvider';
 import Authorization from '@Screens/Authorization';
+import DriverMap from '@Screens/DriverMap';
 import ManageRoutes from '@Screens/ManageRoutes';
-import Map from '@Screens/Map';
 import SelectPlace from '@Screens/SelectPlace';
 
 SplashScreen.preventAutoHideAsync();
@@ -25,7 +25,7 @@ type PlaceInfo = {
 export type StackParamList = {
   Authorization: undefined;
   ManageRoutes: undefined;
-  Map: undefined;
+  DriverMap: undefined;
   SelectPlace:
     | { date: string; driverUid: string; place?: undefined; type: 'Add' }
     | { date: string; driverUid: string; place: PlaceInfo; type: 'Edit' };
@@ -46,7 +46,7 @@ const Navigation = () => {
   }
 
   if (user) {
-    initialRouteName = user.role === 'dispatcher' ? 'ManageRoutes' : 'Map';
+    initialRouteName = user.role === 'dispatcher' ? 'ManageRoutes' : 'DriverMap';
   }
 
   const homeScreenOptions: ComponentProps<typeof Stack.Group>['screenOptions'] = ({ navigation }) => ({
@@ -59,7 +59,7 @@ const Navigation = () => {
         <Stack.Screen component={Authorization} name="Authorization" options={{ headerShown: false }} />
         <Stack.Group screenOptions={homeScreenOptions}>
           <Stack.Screen component={ManageRoutes} name="ManageRoutes" options={{ title: 'Routes Management' }} />
-          <Stack.Screen component={Map} name="Map" />
+          <Stack.Screen component={DriverMap} name="DriverMap" />
         </Stack.Group>
         <Stack.Screen component={SelectPlace} name="SelectPlace" />
       </Stack.Navigator>

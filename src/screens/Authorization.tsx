@@ -20,7 +20,7 @@ export default function Authorization({ navigation }: Props) {
     }
 
     if (result) {
-      navigation.replace(result.role === 'dispatcher' ? 'ManageRoutes' : 'Map');
+      navigation.replace(result.role === 'dispatcher' ? 'ManageRoutes' : 'DriverMap');
     }
   };
 

@@ -1,3 +1,5 @@
+import interpolate from '@Utils/interpolate';
+
 type Range = [number, number];
 
 const androidElevation = [
@@ -34,13 +36,6 @@ const opacityTo: Range = [0.2, 0.6];
 
 const radiusFrom: Range = [androidElevation[0].blur, androidElevation[elevationLength - 1].blur];
 const radiusTo: Range = [1, 16];
-
-const interpolate = (value: number, x1: number, y1: number, x2: number, y2: number) => {
-  const distFromStartPoint = value - x1;
-  const slopeRation = (y2 - x2) / (y1 - x1);
-
-  return x2 + distFromStartPoint * slopeRation;
-};
 
 type Elevation = {
   elevation: number;

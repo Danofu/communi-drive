@@ -1,24 +1,17 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import moment from 'moment';
 import { useLayoutEffect, useState } from 'react';
-import { Dimensions, Keyboard, StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import MapView, { EdgePadding, LatLng, MapViewProps, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { IconButtonProps } from 'react-native-paper';
 
 import HeaderSavePlaceButton from '@Components/HeaderSavePlaceButton';
 import PlaceSearchBar, { Props as PlaceSearchBarProps } from '@Components/PlaceSearchBar';
 import ErrorSnackbar, { Props as ErrorSnackbarProps } from '@Components/UI/ErrorSnackbar';
+import deltas from '@Utils/deltas';
 import { setPlace } from '@Utils/firebase/firebase-database';
 import { geocode, reverseGeocodeByCoords, reverseGeocodeByPlaceId } from '@Utils/http/maps';
 import { StackParamList } from 'App';
-import { IconButtonProps } from 'react-native-paper';
-
-const { height, width } = Dimensions.get('window');
-
-const ASPECT_RATION = width / height;
-const LATITUDE_DELTA = 0.0222;
-const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATION;
-
-const deltas = { latitudeDelta: LATITUDE_DELTA, longitudeDelta: LONGITUDE_DELTA };
 
 let map: MapView | null | undefined;
 const mapPadding: EdgePadding = { bottom: 0, left: 0, right: 0, top: 70 };
@@ -83,11 +76,11 @@ export default function SelectPlace({ navigation, route }: Props) {
     const { address, coords } = result;
     setMarkerCoords(coords);
     setMarkerTitle(address);
-    map && map.animateToRegion({ ...coords, ...deltas }, 1000);
+    map && map.animateToRegion({ ...coords, ...deltas() }, 1000);
   };
 
   if (params.type === 'Edit') {
-    initialRegion = { ...params.place.coords, ...deltas };
+    initialRegion = { ...params.place.coords, ...deltas() };
   }
 
   useLayoutEffect(() => {

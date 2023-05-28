@@ -34,7 +34,5 @@ export default function DatePicker({ onChange, style, value }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
+  root: {},
 });
