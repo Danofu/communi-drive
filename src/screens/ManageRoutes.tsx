@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
   datePickerContainer: {
     alignItems: 'center',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     width: '100%',
   },
   driverPickerLabel: {
