@@ -2,11 +2,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PermissionStatus, getCurrentPositionAsync, getHeadingAsync, useForegroundPermissions } from 'expo-location';
 import moment from 'moment';
 import { useLayoutEffect, useState } from 'react';
-import { Alert, Linking, Platform, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Platform, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { MapViewProps, PROVIDER_GOOGLE } from 'react-native-maps';
 import { ToggleButtonProps } from 'react-native-paper';
 
 import DriverMapActions from '@Components/DriverMapActions';
+import DriverMapBottomSheet from '@Components/DriverMapBottomSheet';
 import average from '@Utils/average';
 import deltas from '@Utils/deltas';
 import interpolate from '@Utils/interpolate';
@@ -118,13 +120,7 @@ export default function DriverMap({ navigation }: Props) {
   }, []);
 
   return (
-    <View style={styles.root}>
-      <DriverMapActions
-        date={date}
-        isFollowing={isFollowing}
-        onDatePicked={datePickedHandler}
-        onFollowToggle={followPressHandler}
-      />
+    <GestureHandlerRootView style={styles.root}>
       <MapView
         mapPadding={{ bottom: 0, left: 0, right: 0, top: 54 }}
         onMapReady={mapReadyHandler}
@@ -136,7 +132,14 @@ export default function DriverMap({ navigation }: Props) {
         style={styles.map}
         toolbarEnabled={false}
       />
-    </View>
+      <DriverMapActions
+        date={date}
+        isFollowing={isFollowing}
+        onDatePicked={datePickedHandler}
+        onFollowToggle={followPressHandler}
+      />
+      <DriverMapBottomSheet />
+    </GestureHandlerRootView>
   );
 }
 

@@ -3,6 +3,8 @@ module.exports = function (api) {
   return {
     env: { production: { plugins: ['react-native-paper/babel'] } },
     plugins: [
+      'module:react-native-dotenv',
+      'react-native-reanimated/plugin',
       [
         'module-resolver',
         {
@@ -16,7 +18,6 @@ module.exports = function (api) {
           extensions: ['.ts', '.tsx'],
         },
       ],
-      ['module:react-native-dotenv'],
     ],
     presets: ['babel-preset-expo'],
   };
