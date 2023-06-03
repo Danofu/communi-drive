@@ -47,6 +47,7 @@ export default function DriverMap({ navigation }: Props) {
   const [isPlacesFetching, setIsPlacesFetching] = useState(true);
   const [isUserLocated, setIsUserLocated] = useState(false);
   const [permissionInfo, requestPermission] = useForegroundPermissions();
+  const [dashMultiplier, setDashMultiplier] = useState(deltas().latitudeDelta);
   const theme = useTheme();
 
   const [destination, setDestination] = useState<Location>();
@@ -59,6 +60,9 @@ export default function DriverMap({ navigation }: Props) {
     () => (destination && origin && fetchedPlaces ? getWaypoints(origin, destination, fetchedPlaces) : []),
     [destination, fetchedPlaces, origin]
   );
+
+  const dash = Math.ceil(3000 * dashMultiplier);
+  const dashGap = Math.ceil(1500 * dashMultiplier);
 
   const placesListener = useCallback<Listener>((snapshot) => {
     const places = parseSnapshot(snapshot, placesSchema);
@@ -169,7 +173,10 @@ export default function DriverMap({ navigation }: Props) {
     }
   };
 
-  const datePickedHandler: DriverMapActionsProps['onDatePicked'] = setDate;
+  const datePickedHandler: DriverMapActionsProps['onDatePicked'] = (date) => {
+    navigation.setOptions({ title: date.format('dddd, DD MMM YYYY') })
+    setDate(date)
+  };
 
   const userDirectionStartHandler: MapViewDirectionsProps['onStart'] = () => setIsUserDirectionLoading(true);
 
@@ -189,6 +196,8 @@ export default function DriverMap({ navigation }: Props) {
   const destinationSelectedHandler: DriverMapMarkersProps['onDestinationSelect'] = (place) =>
     setDestination({ place, type: 'manual' });
 
+  const regionChangeHandler: MapViewProps['onRegionChange'] = ({ latitudeDelta }) => setDashMultiplier(latitudeDelta);
+
   useLayoutEffect(() => {
     navigation.setOptions({ title: date.format('dddd, DD MMM YYYY') });
   }, []);
@@ -206,8 +215,9 @@ export default function DriverMap({ navigation }: Props) {
     <GestureHandlerRootView style={styles.root}>
       <DriverMapLoadingIndicator loading={isPlacesFetching || isPlacesDirectionLoading || isUserDirectionLoading} />
       <MapView
-        mapPadding={{ bottom: 60, left: 0, right: 0, top: 54 }}
+        mapPadding={{ bottom: 0, left: 0, right: 0, top: 54 }}
         onMapReady={mapReadyHandler}
+        onRegionChange={regionChangeHandler}
         onUserLocationChange={userLocationChangeHandler}
         provider={PROVIDER_GOOGLE}
         ref={(ref) => (map = ref)}
@@ -240,7 +250,7 @@ export default function DriverMap({ navigation }: Props) {
           <MapViewDirections
             apikey={FIREBASE_WEB_API_KEY}
             destination={{ latitude: origin.place.lat, longitude: origin.place.lng }}
-            lineDashPattern={[1]}
+            lineDashPattern={[dash, dashGap]}
             onError={userDirectionErrorHandler}
             onReady={userDirectionReadyHandler}
             onStart={userDirectionStartHandler}
