@@ -2,7 +2,7 @@ import { FIREBASE_WEB_API_KEY } from '@env';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PermissionStatus, getCurrentPositionAsync, getHeadingAsync, useForegroundPermissions } from 'expo-location';
 import moment from 'moment';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { LatLng, MapViewProps, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -10,10 +10,9 @@ import MapViewDirections, { type MapViewDirectionsProps } from 'react-native-map
 import { ToggleButtonProps, useTheme } from 'react-native-paper';
 
 import DriverMapActions, { type Props as DriverMapActionsProps } from '@Components/DriverMapActions';
-import DriverMapBottomSheet from '@Components/DriverMapBottomSheet';
 import DriverMapLoadingIndicator from '@Components/DriverMapLoadingIndicator';
-import DriverMapMarkers from '@Components/DriverMapMarkers';
-import { placesSchema, type Places } from '@Components/Places/PlacesList';
+import DriverMapMarkers, { type Props as DriverMapMarkersProps } from '@Components/DriverMapMarkers';
+import { placesSchema, type Place, type Places } from '@Components/Places/PlacesList';
 import average from '@Utils/average';
 import deltas from '@Utils/deltas';
 import { auth } from '@Utils/firebase/firebase-auth';
@@ -22,11 +21,12 @@ import interpolate from '@Utils/interpolate';
 import parseSnapshot from '@Utils/parseSnapshot';
 import reflect from '@Utils/reflect';
 import { StackParamList } from 'App';
+import getWaypoints from '@Utils/getWaypoints';
 
 let map: MapView | null | undefined;
 
 const MAX_ZOOM = 17;
-const MIN_ZOOM = 14;
+const MIN_ZOOM = 15;
 
 const MAX_PITCH = 55;
 const MIN_PITCH = 45;
@@ -37,7 +37,7 @@ const MIN_SPEED = 0;
 
 type Props = NativeStackScreenProps<StackParamList, 'DriverMap'>;
 
-type Location = { coords: LatLng; type: 'auto' | 'manual' };
+export type Location = { place: Place; type: 'auto' | 'manual' };
 
 export default function DriverMap({ navigation }: Props) {
   const [date, setDate] = useState(moment());
@@ -54,7 +54,11 @@ export default function DriverMap({ navigation }: Props) {
   const [isUserDirectionLoading, setIsUserDirectionLoading] = useState(false);
   const [origin, setOrigin] = useState<Location>();
   const [userLocation, setUserLocation] = useState<LatLng>();
-  const [waypoints, setWaypoints] = useState<Array<LatLng>>([]);
+
+  const waypoints = useMemo<Array<LatLng>>(
+    () => (destination && origin && fetchedPlaces ? getWaypoints(origin, destination, fetchedPlaces) : []),
+    [destination, fetchedPlaces, origin]
+  );
 
   const placesListener = useCallback<Listener>((snapshot) => {
     const places = parseSnapshot(snapshot, placesSchema);
@@ -68,19 +72,13 @@ export default function DriverMap({ navigation }: Props) {
 
       firstPlace &&
         setOrigin((prevOrigin) =>
-          !prevOrigin || prevOrigin.type === 'auto'
-            ? { coords: { latitude: firstPlace.lat, longitude: firstPlace.lng }, type: 'auto' }
-            : prevOrigin
+          !prevOrigin || prevOrigin.type === 'auto' ? { place: firstPlace, type: 'auto' } : prevOrigin
         );
 
       lastPlace &&
         setDestination((prevDestination) =>
-          !prevDestination || prevDestination.type === 'auto'
-            ? { coords: { latitude: lastPlace.lat, longitude: lastPlace.lng }, type: 'auto' }
-            : prevDestination
+          !prevDestination || prevDestination.type === 'auto' ? { place: lastPlace, type: 'auto' } : prevDestination
         );
-
-      setWaypoints(placesArray.map((place) => ({ latitude: place.lat, longitude: place.lng })));
     }
   }, []);
 
@@ -185,6 +183,12 @@ export default function DriverMap({ navigation }: Props) {
 
   const placesDirectionErrorHandler: MapViewDirectionsProps['onError'] = () => setIsPlacesDirectionLoading(false);
 
+  const originSelectedHandler: DriverMapMarkersProps['onOriginSelect'] = (place) =>
+    setOrigin({ place, type: 'manual' });
+
+  const destinationSelectedHandler: DriverMapMarkersProps['onDestinationSelect'] = (place) =>
+    setDestination({ place, type: 'manual' });
+
   useLayoutEffect(() => {
     navigation.setOptions({ title: date.format('dddd, DD MMM YYYY') });
   }, []);
@@ -212,32 +216,37 @@ export default function DriverMap({ navigation }: Props) {
         style={styles.map}
         toolbarEnabled={false}
       >
-        <DriverMapMarkers places={fetchedPlaces} />
-        {isDirecting && (
+        <DriverMapMarkers
+          onDestinationSelect={destinationSelectedHandler}
+          onOriginSelect={originSelectedHandler}
+          places={fetchedPlaces}
+        />
+        {isDirecting && destination && origin && (
           <MapViewDirections
             apikey={FIREBASE_WEB_API_KEY}
-            destination={origin?.coords}
+            destination={{ latitude: destination.place.lat, longitude: destination.place.lng }}
+            onError={placesDirectionErrorHandler}
+            onReady={placesDirectionReadyHandler}
+            onStart={placesDirectionStartHandler}
+            optimizeWaypoints
+            origin={{ latitude: origin.place.lat, longitude: origin.place.lng }}
+            splitWaypoints
+            strokeColor={theme.colors.primary}
+            strokeWidth={6}
+            waypoints={waypoints}
+          />
+        )}
+        {isDirecting && origin && (
+          <MapViewDirections
+            apikey={FIREBASE_WEB_API_KEY}
+            destination={{ latitude: origin.place.lat, longitude: origin.place.lng }}
+            lineDashPattern={[1]}
             onError={userDirectionErrorHandler}
             onReady={userDirectionReadyHandler}
             onStart={userDirectionStartHandler}
             origin={userLocation}
             strokeColor={theme.colors.tertiary}
             strokeWidth={6}
-          />
-        )}
-        {isDirecting && (
-          <MapViewDirections
-            apikey={FIREBASE_WEB_API_KEY}
-            destination={destination?.coords}
-            onError={placesDirectionErrorHandler}
-            onReady={placesDirectionReadyHandler}
-            onStart={placesDirectionStartHandler}
-            optimizeWaypoints
-            origin={origin?.coords}
-            splitWaypoints
-            strokeColor={theme.colors.primary}
-            strokeWidth={6}
-            waypoints={waypoints}
           />
         )}
       </MapView>
@@ -249,7 +258,6 @@ export default function DriverMap({ navigation }: Props) {
         onDirectToggle={directPressHandler}
         onFollowToggle={followPressHandler}
       />
-      <DriverMapBottomSheet />
     </GestureHandlerRootView>
   );
 }
