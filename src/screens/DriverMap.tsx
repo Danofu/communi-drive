@@ -1,16 +1,18 @@
+import { FIREBASE_WEB_API_KEY } from '@env';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PermissionStatus, getCurrentPositionAsync, getHeadingAsync, useForegroundPermissions } from 'expo-location';
 import moment from 'moment';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { Alert, Linking, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import MapView, { MapViewProps, PROVIDER_GOOGLE } from 'react-native-maps';
-import { ToggleButtonProps } from 'react-native-paper';
+import MapView, { LatLng, MapViewProps, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapViewDirections, { type MapViewDirectionsProps } from 'react-native-maps-directions';
+import { ToggleButtonProps, useTheme } from 'react-native-paper';
 
 import DriverMapActions, { type Props as DriverMapActionsProps } from '@Components/DriverMapActions';
 import DriverMapBottomSheet from '@Components/DriverMapBottomSheet';
+import DriverMapLoadingIndicator from '@Components/DriverMapLoadingIndicator';
 import DriverMapMarkers from '@Components/DriverMapMarkers';
-import DriverMapMarkersLoading from '@Components/DriverMapMarkers/Loading';
 import { placesSchema, type Places } from '@Components/Places/PlacesList';
 import average from '@Utils/average';
 import deltas from '@Utils/deltas';
@@ -35,18 +37,51 @@ const MIN_SPEED = 0;
 
 type Props = NativeStackScreenProps<StackParamList, 'DriverMap'>;
 
+type Location = { coords: LatLng; type: 'auto' | 'manual' };
+
 export default function DriverMap({ navigation }: Props) {
   const [date, setDate] = useState(moment());
   const [fetchedPlaces, setFetchedPlaces] = useState<Places | null>(null);
+  const [isDirecting, setIsDirecting] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isPlacesFetching, setIsPlacesFetching] = useState(true);
   const [isUserLocated, setIsUserLocated] = useState(false);
   const [permissionInfo, requestPermission] = useForegroundPermissions();
+  const theme = useTheme();
+
+  const [destination, setDestination] = useState<Location>();
+  const [isPlacesDirectionLoading, setIsPlacesDirectionLoading] = useState(false);
+  const [isUserDirectionLoading, setIsUserDirectionLoading] = useState(false);
+  const [origin, setOrigin] = useState<Location>();
+  const [userLocation, setUserLocation] = useState<LatLng>();
+  const [waypoints, setWaypoints] = useState<Array<LatLng>>([]);
 
   const placesListener = useCallback<Listener>((snapshot) => {
     const places = parseSnapshot(snapshot, placesSchema);
     setFetchedPlaces(places);
     setIsPlacesFetching(false);
+
+    if (places) {
+      const placesArray = Object.values(places);
+      const firstPlace = placesArray.shift();
+      const lastPlace = placesArray.pop();
+
+      firstPlace &&
+        setOrigin((prevOrigin) =>
+          !prevOrigin || prevOrigin.type === 'auto'
+            ? { coords: { latitude: firstPlace.lat, longitude: firstPlace.lng }, type: 'auto' }
+            : prevOrigin
+        );
+
+      lastPlace &&
+        setDestination((prevDestination) =>
+          !prevDestination || prevDestination.type === 'auto'
+            ? { coords: { latitude: lastPlace.lat, longitude: lastPlace.lng }, type: 'auto' }
+            : prevDestination
+        );
+
+      setWaypoints(placesArray.map((place) => ({ latitude: place.lat, longitude: place.lng })));
+    }
   }, []);
 
   const userLocationChangeHandler: MapViewProps['onUserLocationChange'] = ({ nativeEvent }) => {
@@ -125,7 +160,30 @@ export default function DriverMap({ navigation }: Props) {
     }
   };
 
+  const directPressHandler: ToggleButtonProps['onPress'] = async () => {
+    setIsDirecting((prevIsDirecting) => !prevIsDirecting);
+
+    if (isDirecting) {
+      setUserLocation(undefined);
+    } else {
+      const { coords } = await getCurrentPositionAsync();
+      setUserLocation(coords);
+    }
+  };
+
   const datePickedHandler: DriverMapActionsProps['onDatePicked'] = setDate;
+
+  const userDirectionStartHandler: MapViewDirectionsProps['onStart'] = () => setIsUserDirectionLoading(true);
+
+  const userDirectionReadyHandler: MapViewDirectionsProps['onReady'] = () => setIsUserDirectionLoading(false);
+
+  const userDirectionErrorHandler: MapViewDirectionsProps['onError'] = () => setIsUserDirectionLoading(false);
+
+  const placesDirectionStartHandler: MapViewDirectionsProps['onStart'] = () => setIsPlacesDirectionLoading(true);
+
+  const placesDirectionReadyHandler: MapViewDirectionsProps['onReady'] = () => setIsPlacesDirectionLoading(false);
+
+  const placesDirectionErrorHandler: MapViewDirectionsProps['onError'] = () => setIsPlacesDirectionLoading(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: date.format('dddd, DD MMM YYYY') });
@@ -142,9 +200,9 @@ export default function DriverMap({ navigation }: Props) {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <DriverMapMarkersLoading loading={isPlacesFetching} />
+      <DriverMapLoadingIndicator loading={isPlacesFetching || isPlacesDirectionLoading || isUserDirectionLoading} />
       <MapView
-        mapPadding={{ bottom: 0, left: 0, right: 0, top: 54 }}
+        mapPadding={{ bottom: 60, left: 0, right: 0, top: 54 }}
         onMapReady={mapReadyHandler}
         onUserLocationChange={userLocationChangeHandler}
         provider={PROVIDER_GOOGLE}
@@ -155,11 +213,40 @@ export default function DriverMap({ navigation }: Props) {
         toolbarEnabled={false}
       >
         <DriverMapMarkers places={fetchedPlaces} />
+        {isDirecting && (
+          <MapViewDirections
+            apikey={FIREBASE_WEB_API_KEY}
+            destination={origin?.coords}
+            onError={userDirectionErrorHandler}
+            onReady={userDirectionReadyHandler}
+            onStart={userDirectionStartHandler}
+            origin={userLocation}
+            strokeColor={theme.colors.tertiary}
+            strokeWidth={6}
+          />
+        )}
+        {isDirecting && (
+          <MapViewDirections
+            apikey={FIREBASE_WEB_API_KEY}
+            destination={destination?.coords}
+            onError={placesDirectionErrorHandler}
+            onReady={placesDirectionReadyHandler}
+            onStart={placesDirectionStartHandler}
+            optimizeWaypoints
+            origin={origin?.coords}
+            splitWaypoints
+            strokeColor={theme.colors.primary}
+            strokeWidth={6}
+            waypoints={waypoints}
+          />
+        )}
       </MapView>
       <DriverMapActions
         date={date}
+        isDirecting={isDirecting}
         isFollowing={isFollowing}
         onDatePicked={datePickedHandler}
+        onDirectToggle={directPressHandler}
         onFollowToggle={followPressHandler}
       />
       <DriverMapBottomSheet />

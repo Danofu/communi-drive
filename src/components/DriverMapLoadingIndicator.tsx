@@ -6,7 +6,7 @@ type Props = {
   loading?: boolean;
 };
 
-export default function DriverMapMarkersLoading({ loading = false }: Props) {
+export default function DriverMapLoadingIndicator({ loading = false }: Props) {
   const theme = useTheme();
 
   if (!loading) {
