@@ -1,21 +1,25 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PermissionStatus, getCurrentPositionAsync, getHeadingAsync, useForegroundPermissions } from 'expo-location';
 import moment from 'moment';
-import { useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { Alert, Linking, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { MapViewProps, PROVIDER_GOOGLE } from 'react-native-maps';
 import { ToggleButtonProps } from 'react-native-paper';
 
-import DriverMapActions from '@Components/DriverMapActions';
+import DriverMapActions, { type Props as DriverMapActionsProps } from '@Components/DriverMapActions';
 import DriverMapBottomSheet from '@Components/DriverMapBottomSheet';
+import DriverMapMarkers from '@Components/DriverMapMarkers';
+import DriverMapMarkersLoading from '@Components/DriverMapMarkers/Loading';
+import { placesSchema, type Places } from '@Components/Places/PlacesList';
 import average from '@Utils/average';
 import deltas from '@Utils/deltas';
+import { auth } from '@Utils/firebase/firebase-auth';
+import { onPlaces, type Listener } from '@Utils/firebase/firebase-database';
 import interpolate from '@Utils/interpolate';
+import parseSnapshot from '@Utils/parseSnapshot';
 import reflect from '@Utils/reflect';
 import { StackParamList } from 'App';
-
-import type { Props as DriverMapActionsProps } from '@Components/DriverMapActions';
 
 let map: MapView | null | undefined;
 
@@ -33,9 +37,17 @@ type Props = NativeStackScreenProps<StackParamList, 'DriverMap'>;
 
 export default function DriverMap({ navigation }: Props) {
   const [date, setDate] = useState(moment());
+  const [fetchedPlaces, setFetchedPlaces] = useState<Places | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isPlacesFetching, setIsPlacesFetching] = useState(true);
   const [isUserLocated, setIsUserLocated] = useState(false);
   const [permissionInfo, requestPermission] = useForegroundPermissions();
+
+  const placesListener = useCallback<Listener>((snapshot) => {
+    const places = parseSnapshot(snapshot, placesSchema);
+    setFetchedPlaces(places);
+    setIsPlacesFetching(false);
+  }, []);
 
   const userLocationChangeHandler: MapViewProps['onUserLocationChange'] = ({ nativeEvent }) => {
     if (!map || !nativeEvent.coordinate) {
@@ -119,8 +131,18 @@ export default function DriverMap({ navigation }: Props) {
     navigation.setOptions({ title: date.format('dddd, DD MMM YYYY') });
   }, []);
 
+  useEffect(() => {
+    if (!auth.currentUser) {
+      return;
+    }
+
+    setIsPlacesFetching(true);
+    return onPlaces(auth.currentUser.uid, date, placesListener);
+  }, [date]);
+
   return (
     <GestureHandlerRootView style={styles.root}>
+      <DriverMapMarkersLoading loading={isPlacesFetching} />
       <MapView
         mapPadding={{ bottom: 0, left: 0, right: 0, top: 54 }}
         onMapReady={mapReadyHandler}
@@ -131,7 +153,9 @@ export default function DriverMap({ navigation }: Props) {
         showsUserLocation
         style={styles.map}
         toolbarEnabled={false}
-      />
+      >
+        <DriverMapMarkers places={fetchedPlaces} />
+      </MapView>
       <DriverMapActions
         date={date}
         isFollowing={isFollowing}

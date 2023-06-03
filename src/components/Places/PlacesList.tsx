@@ -8,11 +8,11 @@ import PlacesItem from '@Components/Places/PlacesItem';
 import { Listener, onPlaces } from '@Utils/firebase/firebase-database';
 import parseSnapshot from '@Utils/parseSnapshot';
 
-const placesSchema = zod.record(
+export const placesSchema = zod.record(
   zod.string(),
   zod.object({ address: zod.string(), id: zod.string(), lat: zod.number(), lng: zod.number() })
 );
-type Places = zod.infer<typeof placesSchema>;
+export type Places = zod.infer<typeof placesSchema>;
 export type Place = Places[string];
 
 type Props = { driverUid: string; date: Moment };
