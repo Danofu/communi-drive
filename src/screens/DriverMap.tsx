@@ -17,11 +17,11 @@ import average from '@Utils/average';
 import deltas from '@Utils/deltas';
 import { auth } from '@Utils/firebase/firebase-auth';
 import { onPlaces, type Listener } from '@Utils/firebase/firebase-database';
+import getWaypoints from '@Utils/getWaypoints';
 import interpolate from '@Utils/interpolate';
 import parseSnapshot from '@Utils/parseSnapshot';
 import reflect from '@Utils/reflect';
 import { StackParamList } from 'App';
-import getWaypoints from '@Utils/getWaypoints';
 
 let map: MapView | null | undefined;
 
@@ -174,8 +174,8 @@ export default function DriverMap({ navigation }: Props) {
   };
 
   const datePickedHandler: DriverMapActionsProps['onDatePicked'] = (date) => {
-    navigation.setOptions({ title: date.format('dddd, DD MMM YYYY') })
-    setDate(date)
+    navigation.setOptions({ title: date.format('dddd, DD MMM YYYY') });
+    setDate(date);
   };
 
   const userDirectionStartHandler: MapViewDirectionsProps['onStart'] = () => setIsUserDirectionLoading(true);
@@ -250,7 +250,7 @@ export default function DriverMap({ navigation }: Props) {
           <MapViewDirections
             apikey={FIREBASE_WEB_API_KEY}
             destination={{ latitude: origin.place.lat, longitude: origin.place.lng }}
-            lineDashPattern={[dash, dashGap]}
+            lineDashPattern={Platform.OS === 'ios' ? [dash, dashGap] : [1 / dash, 1 / dashGap]}
             onError={userDirectionErrorHandler}
             onReady={userDirectionReadyHandler}
             onStart={userDirectionStartHandler}
